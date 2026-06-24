@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mys（ミース）| 立川・髪質改善専門サロン</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: #FAFAF7;
+      color: #2C2C2C;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(160deg, #F5EFE6 0%, #EDE4D5 100%);
+      padding: 64px 24px 56px;
+      text-align: center;
+    }
+    .hero-label {
+      display: inline-block;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: #B8975A;
+      border: 1px solid #B8975A;
+      padding: 4px 14px;
+      margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 36px;
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: 0.05em;
+      color: #2C2C2C;
+      margin-bottom: 20px;
+    }
+    .hero h1 span {
+      color: #B8975A;
+    }
+    .hero-sub {
+      font-size: 14px;
+      color: #555;
+      line-height: 2;
+      margin-bottom: 32px;
+    }
+    .btn-primary {
+      display: block;
+      background: #B8975A;
+      color: #fff;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 18px 24px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+      max-width: 360px;
+      margin: 0 auto 12px;
+      text-align: center;
+    }
+    .btn-secondary {
+      display: block;
+      background: transparent;
+      color: #6B7B6B;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 14px 24px;
+      border-radius: 4px;
+      border: 1px solid #6B7B6B;
+      max-width: 360px;
+      margin: 0 auto;
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
+    .hero-note {
+      font-size: 11px;
+      color: #999;
+      margin-top: 16px;
+    }
+
+    /* ── Section ── */
+    section {
+      padding: 64px 0;
+    }
+    section + section {
+      border-top: 1px solid #E8E2D8;
+    }
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: #B8975A;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.5;
+      margin-bottom: 32px;
+    }
+
+    /* ── 悩みリスト ── */
+    .worry-list {
+      list-style: none;
+      margin-bottom: 32px;
+    }
+    .worry-list li {
+      padding: 14px 0;
+      border-bottom: 1px solid #E8E2D8;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .worry-list li::before {
+      content: '';
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #EDE4D5;
+      flex-shrink: 0;
+    }
+    .worry-answer {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 18px;
+      color: #B8975A;
+      text-align: center;
+      margin-top: 32px;
+    }
+
+    /* ── 理由カード ── */
+    .reason-card {
+      background: #fff;
+      border: 1px solid #E8E2D8;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .reason-num {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: #B8975A;
+      margin-bottom: 8px;
+    }
+    .reason-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .reason-body {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.9;
+    }
+
+    /* ── メニュー ── */
+    .menu-card {
+      background: #fff;
+      border: 1px solid #E8E2D8;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .menu-info {}
+    .menu-tag {
+      font-size: 11px;
+      color: #B8975A;
+      margin-bottom: 4px;
+    }
+    .menu-name {
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .menu-price {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 18px;
+      color: #2C2C2C;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── 平日特典 ── */
+    .tokuten {
+      background: linear-gradient(135deg, #B8975A 0%, #C8A96A 100%);
+      color: #fff;
+      border-radius: 8px;
+      padding: 40px 24px;
+      text-align: center;
+    }
+    .tokuten-label {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      opacity: 0.8;
+      margin-bottom: 16px;
+    }
+    .tokuten-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .tokuten-sub {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-bottom: 28px;
+      line-height: 1.9;
+    }
+    .btn-white {
+      display: block;
+      background: #fff;
+      color: #B8975A;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 16px 24px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+      text-align: center;
+    }
+
+    /* ── 口コミ ── */
+    .review-card {
+      background: #fff;
+      border: 1px solid #E8E2D8;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+    .review-stars {
+      color: #B8975A;
+      font-size: 14px;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+    }
+    .review-text {
+      font-size: 14px;
+      color: #444;
+      line-height: 1.9;
+      margin-bottom: 12px;
+    }
+    .review-meta {
+      font-size: 11px;
+      color: #999;
+    }
+    .review-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #F5EFE6;
+      border-radius: 4px;
+      padding: 10px 16px;
+      margin-bottom: 24px;
+    }
+    .review-badge-num {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: #B8975A;
+    }
+    .review-badge-text {
+      font-size: 12px;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    /* ── サロン情報 ── */
+    .info-row {
+      display: flex;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid #E8E2D8;
+      font-size: 14px;
+    }
+    .info-label {
+      color: #B8975A;
+      font-size: 12px;
+      font-weight: 700;
+      min-width: 72px;
+      padding-top: 2px;
+    }
+    .map-wrap {
+      margin-top: 24px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    /* ── フッターCTA ── */
+    .footer-cta {
+      background: #2C2C2C;
+      color: #fff;
+      padding: 56px 24px;
+      text-align: center;
+    }
+    .footer-cta-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .footer-cta-sub {
+      font-size: 13px;
+      opacity: 0.7;
+      margin-bottom: 32px;
+    }
+    .btn-line {
+      display: block;
+      background: #06C755;
+      color: #fff;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 18px 24px;
+      border-radius: 4px;
+      max-width: 360px;
+      margin: 12px auto 0;
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
+    .footer-copy {
+      text-align: center;
+      font-size: 11px;
+      color: #999;
+      padding: 24px;
+      border-top: 1px solid #E8E2D8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <div class="hero">
+    <p class="hero-label">Mys（ミース）立川</p>
+    <h1>整えるだけで、<span>−5歳。</span></h1>
+    <p class="hero-sub">
+      白髪・うねり・ボリュームのなさ——<br>
+      立川で、30〜60代の髪悩みに向き合う<br>
+      1日3名限定のプライベートサロン
+    </p>
+    <a class="btn-primary" href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener">
+      ▶ 平日限定クーポンでご予約
+    </a>
+    <a class="btn-secondary" href="https://line.me/R/ti/p/@906kdphu" target="_blank" rel="noopener">
+      LINEで相談する
+    </a>
+    <p class="hero-note">ホットペッパービューティー 24時間予約受付中</p>
+  </div>
+
+  <!-- 悩み -->
+  <section>
+    <div class="container">
+      <p class="section-label">Trouble</p>
+      <h2 class="section-title">こんな髪の悩み<br>ありませんか？</h2>
+      <ul class="worry-list">
+        <li>白髪が気になってきた</li>
+        <li>梅雨になるとうねる・広がる</li>
+        <li>年々ボリュームがなくなってきた</li>
+        <li>染めるたびにパサつく</li>
+        <li>「もう歳だから」と諦めてる</li>
+      </ul>
+      <p class="worry-answer">それ、ぜんぶ相談できます。</p>
+    </div>
+  </section>
+
+  <!-- 理由 -->
+  <section>
+    <div class="container">
+      <p class="section-label">Why Mys</p>
+      <h2 class="section-title">Mysが選ばれる<br>3つの理由</h2>
+
+      <div class="reason-card">
+        <p class="reason-num">01</p>
+        <p class="reason-title">悩みを"まとめて"扱いやすくする</p>
+        <p class="reason-body">商材や薬剤の自慢はしません。あなたが今何に困っているかをじっくり聞いて、扱いやすい髪になるまでご一緒します。</p>
+      </div>
+
+      <div class="reason-card">
+        <p class="reason-num">02</p>
+        <p class="reason-title">口コミ4.71 / 117件の実績</p>
+        <p class="reason-body">「また来たくなる」と言っていただけるサロンを目指してきた結果が、このスコアに表れています。</p>
+      </div>
+
+      <div class="reason-card">
+        <p class="reason-num">03</p>
+        <p class="reason-title">1日3名限定・完全個室マンツーマン</p>
+        <p class="reason-body">人目を気にせず、担当者がずっとそばにいます。バタバタしません。ゆっくり、じっくり。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- メニュー -->
+  <section>
+    <div class="container">
+      <p class="section-label">Menu</p>
+      <h2 class="section-title">悩み別メニュー</h2>
+
+      <div class="menu-card">
+        <div class="menu-info">
+          <p class="menu-tag">白髪も気になる方へ</p>
+          <p class="menu-name">髪質改善カラーエステ</p>
+        </div>
+        <p class="menu-price">¥12,000</p>
+      </div>
+
+      <div class="menu-card">
+        <div class="menu-info">
+          <p class="menu-tag">うねり・パサつきを卒業したい</p>
+          <p class="menu-name">髪質改善ヘアエステ＋カット</p>
+        </div>
+        <p class="menu-price">¥14,000</p>
+      </div>
+
+      <div class="menu-card">
+        <div class="menu-info">
+          <p class="menu-tag">ふんわりツヤを取り戻したい</p>
+          <p class="menu-name">美髪トリートメント髪質改善</p>
+        </div>
+        <p class="menu-price">¥13,000</p>
+      </div>
+
+      <div class="menu-card">
+        <div class="menu-info">
+          <p class="menu-tag">くせ・うねりをまっすぐに</p>
+          <p class="menu-name">髪質改善ストレートエステ＋カット</p>
+        </div>
+        <p class="menu-price">¥24,000</p>
+      </div>
+
+      <div style="margin-top:24px; text-align:center;">
+        <a class="btn-primary" href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener" style="display:inline-block; max-width:360px;">
+          全メニュー・クーポンを見る
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 平日特典 -->
+  <section>
+    <div class="container">
+      <p class="section-label">Weekday Privilege</p>
+      <h2 class="section-title">平日に来るメリット</h2>
+      <div class="tokuten">
+        <p class="tokuten-label">WEEKDAY 10:00〜15:00</p>
+        <p class="tokuten-title">ヘッドスパ10分<br>プレゼント中</p>
+        <p class="tokuten-sub">
+          平日はお席にゆとりがあり、<br>
+          いつもよりゆっくりお過ごしいただけます。<br>
+          「平日のほうがリラックスできる」という<br>
+          お客様の声からはじめた特典です。
+        </p>
+        <a class="btn-white" href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener">
+          平日クーポンでご予約
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 口コミ -->
+  <section>
+    <div class="container">
+      <p class="section-label">Voice</p>
+      <h2 class="section-title">お客様の声</h2>
+
+      <div class="review-badge">
+        <p class="review-badge-num">4.71</p>
+        <div class="review-badge-text">
+          <span style="color:#B8975A;">★★★★★</span><br>
+          117件の口コミ（Google）
+        </div>
+      </div>
+
+      <div class="review-card">
+        <p class="review-stars">★★★★★</p>
+        <p class="review-text">うねりとパサつきに長年悩んでいましたが、施術後は別の髪のようにまとまりました。カウンセリングがとても丁寧で、自分の髪の状態を初めてちゃんと理解できた気がします。</p>
+        <p class="review-meta">50代・立川市／髪質改善ヘアエステ＋カット</p>
+      </div>
+
+      <div class="review-card">
+        <p class="review-stars">★★★★★</p>
+        <p class="review-text">白髪が気になり始めてから色々なサロンを試しましたが、ここが一番「髪が綺麗になった」と実感できました。完全個室なので周りを気にせずゆっくり過ごせるのも嬉しいです。</p>
+        <p class="review-meta">40代・国立市／髪質改善カラーエステ</p>
+      </div>
+
+      <div class="review-card">
+        <p class="review-stars">★★★★★</p>
+        <p class="review-text">平日の昼間に来ましたが、ゆったりしていてとても心地よかったです。ヘッドスパのサービスもついていて、お得感もありました。また平日に来ようと思います。</p>
+        <p class="review-meta">60代・日野市／髪質改善ヘアエステ</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- サロン情報 -->
+  <section>
+    <div class="container">
+      <p class="section-label">Access</p>
+      <h2 class="section-title">サロン情報</h2>
+
+      <div class="info-row">
+        <p class="info-label">サロン名</p>
+        <p>Mys（ミース）</p>
+      </div>
+      <div class="info-row">
+        <p class="info-label">住所</p>
+        <p>東京都立川市柴崎町2-11-20<br>スマイル立川2F</p>
+      </div>
+      <div class="info-row">
+        <p class="info-label">アクセス</p>
+        <p>立川南駅 徒歩2分</p>
+      </div>
+      <div class="info-row">
+        <p class="info-label">営業時間</p>
+        <p>10:00〜19:00</p>
+      </div>
+      <div class="info-row" style="border-bottom:none;">
+        <p class="info-label">定休日</p>
+        <p>なし</p>
+      </div>
+
+      <div class="map-wrap">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3239.847!2d139.4139!3d35.6928!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6018d7ef5aee6ed3%3A0x94f9d6e5d2c9e0a!2z5p2x5bed5biC5p-h5bGx55S677yS5LiB55uu77yR77yR4oiS77yS77yQ!5e0!3m2!1sja!2sjp!4v1687000000000"
+          width="100%"
+          height="220"
+          style="border:0; display:block;"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- フッターCTA -->
+  <div class="footer-cta">
+    <div class="container">
+      <p class="footer-cta-title">髪のことで迷ったら、<br>まずご相談ください。</p>
+      <p class="footer-cta-sub">カウンセリングだけでも大歓迎です</p>
+      <a class="btn-primary" href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener">
+        ホットペッパーから予約する（24時間）
+      </a>
+      <a class="btn-line" href="https://line.me/R/ti/p/@906kdphu" target="_blank" rel="noopener">
+        LINEで気軽に相談する
+      </a>
+    </div>
+  </div>
+
+  <p class="footer-copy">© Mys（ミース）立川 髪質改善専門サロン</p>
+
+</body>
+</html>
