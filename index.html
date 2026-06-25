@@ -6,564 +6,999 @@
   <title>Mys（ミース）| 立川・髪質改善専門サロン</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Serif+JP:wght@300;400;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: 'Noto Sans JP', sans-serif;
-      background: #FAFAF7;
-      color: #2C2C2C;
-      font-size: 15px;
-      line-height: 1.8;
+    :root {
+      --gold: #B8975A;
+      --gold-light: #D4B47A;
+      --cream: #F8F4EE;
+      --beige: #EDE6D8;
+      --dark: #1A1A1A;
+      --mid: #4A4A4A;
+      --light: #888;
+      --white: #FFFFFF;
     }
 
-    .container {
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 0 24px;
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--white);
+      color: var(--dark);
+      font-size: 15px;
+      line-height: 1.9;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    img { max-width: 100%; display: block; }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(184,151,90,0.15);
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      color: var(--dark);
+      text-decoration: none;
+    }
+    .nav-reserve {
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      text-decoration: none;
+      border: 1px solid var(--gold);
+      padding: 8px 20px;
     }
 
     /* ── Hero ── */
     .hero {
-      background: linear-gradient(160deg, #F5EFE6 0%, #EDE4D5 100%);
-      padding: 64px 24px 56px;
+      padding-top: 80px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--white);
       text-align: center;
+      position: relative;
+      overflow: hidden;
     }
-    .hero-label {
-      display: inline-block;
+    .hero-img {
+      width: 100%;
+      height: 55vw;
+      max-height: 520px;
+      object-fit: cover;
+      object-position: center top;
+    }
+    .hero-content {
+      padding: 56px 32px 48px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .hero-en {
+      font-family: 'Cormorant Garamond', serif;
       font-size: 11px;
-      letter-spacing: 0.15em;
-      color: #B8975A;
-      border: 1px solid #B8975A;
-      padding: 4px 14px;
+      letter-spacing: 0.4em;
+      color: var(--gold);
       margin-bottom: 24px;
     }
-    .hero h1 {
+    .hero-catch {
       font-family: 'Noto Serif JP', serif;
-      font-size: 36px;
-      font-weight: 600;
-      line-height: 1.3;
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--mid);
+      line-height: 2.4;
+      margin-bottom: 36px;
       letter-spacing: 0.05em;
-      color: #2C2C2C;
-      margin-bottom: 20px;
     }
-    .hero h1 span {
-      color: #B8975A;
+    .hero-catch strong {
+      display: block;
+      font-size: 26px;
+      font-weight: 400;
+      color: var(--dark);
+      line-height: 1.5;
+      margin-bottom: 8px;
+      letter-spacing: 0.08em;
     }
     .hero-sub {
-      font-size: 14px;
-      color: #555;
+      font-size: 13px;
+      color: var(--light);
       line-height: 2;
-      margin-bottom: 32px;
+      margin-bottom: 40px;
     }
-    .btn-primary {
-      display: block;
-      background: #B8975A;
-      color: #fff;
-      text-decoration: none;
-      font-size: 15px;
-      font-weight: 700;
-      padding: 18px 24px;
-      border-radius: 4px;
-      letter-spacing: 0.05em;
-      max-width: 360px;
-      margin: 0 auto 12px;
-      text-align: center;
+    .gold-line {
+      width: 40px;
+      height: 1px;
+      background: var(--gold);
+      margin: 0 auto 40px;
     }
-    .btn-secondary {
+
+    /* ── Buttons ── */
+    .btn-gold {
       display: block;
-      background: transparent;
-      color: #6B7B6B;
+      background: var(--gold);
+      color: var(--white);
       text-decoration: none;
       font-size: 13px;
       font-weight: 500;
-      padding: 14px 24px;
-      border-radius: 4px;
-      border: 1px solid #6B7B6B;
-      max-width: 360px;
+      letter-spacing: 0.15em;
+      padding: 18px 48px;
+      max-width: 320px;
+      margin: 0 auto 16px;
+      text-align: center;
+    }
+    .btn-line {
+      display: block;
+      background: transparent;
+      color: var(--mid);
+      text-decoration: none;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      padding: 14px 48px;
+      max-width: 320px;
       margin: 0 auto;
       text-align: center;
-      letter-spacing: 0.05em;
-    }
-    .hero-note {
-      font-size: 11px;
-      color: #999;
-      margin-top: 16px;
+      border: 1px solid #ccc;
     }
 
-    /* ── Section ── */
-    section {
-      padding: 64px 0;
+    /* ── Section base ── */
+    .section {
+      padding: 88px 32px;
+      max-width: 600px;
+      margin: 0 auto;
     }
-    section + section {
-      border-top: 1px solid #E8E2D8;
+    .section-full {
+      padding: 88px 32px;
     }
-    .section-label {
+    .section-bg {
+      background: var(--cream);
+    }
+    .section-beige {
+      background: var(--beige);
+    }
+    .sec-en {
+      font-family: 'Cormorant Garamond', serif;
       font-size: 10px;
-      letter-spacing: 0.2em;
-      color: #B8975A;
-      text-transform: uppercase;
+      letter-spacing: 0.4em;
+      color: var(--gold);
       margin-bottom: 12px;
+      display: block;
     }
-    .section-title {
+    .sec-title {
       font-family: 'Noto Serif JP', serif;
-      font-size: 22px;
-      font-weight: 600;
-      line-height: 1.5;
-      margin-bottom: 32px;
-    }
-
-    /* ── 悩みリスト ── */
-    .worry-list {
-      list-style: none;
-      margin-bottom: 32px;
-    }
-    .worry-list li {
-      padding: 14px 0;
-      border-bottom: 1px solid #E8E2D8;
-      font-size: 15px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .worry-list li::before {
-      content: '';
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: #EDE4D5;
-      flex-shrink: 0;
-    }
-    .worry-answer {
-      font-family: 'Noto Serif JP', serif;
-      font-size: 18px;
-      color: #B8975A;
-      text-align: center;
-      margin-top: 32px;
-    }
-
-    /* ── 理由カード ── */
-    .reason-card {
-      background: #fff;
-      border: 1px solid #E8E2D8;
-      border-radius: 8px;
-      padding: 24px;
+      font-size: 21px;
+      font-weight: 400;
+      line-height: 1.7;
+      letter-spacing: 0.05em;
       margin-bottom: 16px;
     }
-    .reason-num {
-      font-size: 11px;
-      letter-spacing: 0.15em;
-      color: #B8975A;
-      margin-bottom: 8px;
-    }
-    .reason-title {
-      font-family: 'Noto Serif JP', serif;
-      font-size: 17px;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-    .reason-body {
+    .sec-lead {
       font-size: 13px;
-      color: #555;
+      color: var(--mid);
+      line-height: 2.1;
+      margin-bottom: 48px;
+    }
+
+    /* ── Concept ── */
+    .concept-quote {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 18px;
+      font-weight: 400;
+      line-height: 2;
+      letter-spacing: 0.08em;
+      color: var(--dark);
+      border-left: 2px solid var(--gold);
+      padding-left: 24px;
+      margin-bottom: 40px;
+    }
+    .concept-body {
+      font-size: 14px;
+      color: var(--mid);
+      line-height: 2.2;
+    }
+
+    /* ── Difference ── */
+    .diff-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: #e0d8cc;
+      border: 1px solid #e0d8cc;
+      margin-top: 40px;
+    }
+    .diff-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      background: var(--white);
+    }
+    .diff-cell {
+      padding: 20px 16px;
+      font-size: 12px;
+      text-align: center;
+      line-height: 1.7;
+      border-right: 1px solid #e0d8cc;
+    }
+    .diff-cell:last-child { border-right: none; }
+    .diff-cell.header {
+      background: var(--cream);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--light);
+      font-weight: 500;
+    }
+    .diff-cell.mys {
+      color: var(--gold);
+      font-weight: 700;
+    }
+    .diff-cell.other {
+      color: #bbb;
+    }
+
+    /* ── Steps ── */
+    .steps {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .step {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      padding: 28px 0;
+      border-bottom: 1px solid #EDE6D8;
+    }
+    .step:last-child { border-bottom: none; }
+    .step-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 300;
+      color: var(--gold);
+      line-height: 1;
+      min-width: 40px;
+      padding-top: 4px;
+    }
+    .step-body {}
+    .step-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 15px;
+      font-weight: 400;
+      margin-bottom: 6px;
+    }
+    .step-desc {
+      font-size: 12px;
+      color: var(--mid);
       line-height: 1.9;
     }
 
-    /* ── メニュー ── */
-    .menu-card {
-      background: #fff;
-      border: 1px solid #E8E2D8;
-      border-radius: 8px;
-      padding: 20px 24px;
+    /* ── Before/After ── */
+    .ba-wrap {
+      margin-top: 40px;
+    }
+    .ba-card {
+      margin-bottom: 48px;
+    }
+    .ba-images {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      margin-bottom: 16px;
+    }
+    .ba-img-wrap {
+      position: relative;
+    }
+    .ba-img-wrap img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+    }
+    .ba-label {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      padding: 3px 8px;
+    }
+    .ba-desc {
+      font-size: 13px;
+      color: var(--mid);
+      line-height: 1.9;
+    }
+    .ba-tag {
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      padding: 2px 10px;
+      margin-bottom: 8px;
+    }
+
+    /* ── Reviews ── */
+    .review-list {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .review-card {
+      background: var(--white);
+      padding: 28px;
+      border: 1px solid #EDE6D8;
+    }
+    .review-stars {
+      color: var(--gold);
+      font-size: 13px;
+      letter-spacing: 3px;
       margin-bottom: 12px;
+    }
+    .review-text {
+      font-size: 13px;
+      color: var(--mid);
+      line-height: 2;
+      margin-bottom: 14px;
+    }
+    .review-who {
+      font-size: 11px;
+      color: var(--light);
+      letter-spacing: 0.05em;
+    }
+    .review-badge {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--cream);
+      padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+    .review-score {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 48px;
+      font-weight: 300;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .review-meta {
+      font-size: 12px;
+      color: var(--mid);
+      line-height: 1.8;
+    }
+
+    /* ── Menu ── */
+    .menu-list {
+      margin-top: 40px;
+      border-top: 1px solid #EDE6D8;
+    }
+    .menu-item {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      gap: 12px;
+      align-items: flex-start;
+      padding: 24px 0;
+      border-bottom: 1px solid #EDE6D8;
+      gap: 16px;
     }
     .menu-info {}
     .menu-tag {
-      font-size: 11px;
-      color: #B8975A;
-      margin-bottom: 4px;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--gold);
+      margin-bottom: 6px;
     }
     .menu-name {
-      font-size: 14px;
-      font-weight: 700;
+      font-family: 'Noto Serif JP', serif;
+      font-size: 16px;
+      font-weight: 400;
+      margin-bottom: 6px;
+    }
+    .menu-note {
+      font-size: 12px;
+      color: var(--light);
     }
     .menu-price {
-      font-family: 'Noto Serif JP', serif;
-      font-size: 18px;
-      color: #2C2C2C;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 300;
+      color: var(--dark);
       white-space: nowrap;
       flex-shrink: 0;
+      text-align: right;
     }
-
-    /* ── 平日特典 ── */
-    .tokuten {
-      background: linear-gradient(135deg, #B8975A 0%, #C8A96A 100%);
-      color: #fff;
-      border-radius: 8px;
-      padding: 40px 24px;
-      text-align: center;
-    }
-    .tokuten-label {
+    .menu-price span {
+      font-family: 'Noto Sans JP', sans-serif;
       font-size: 11px;
-      letter-spacing: 0.2em;
-      opacity: 0.8;
-      margin-bottom: 16px;
-    }
-    .tokuten-title {
-      font-family: 'Noto Serif JP', serif;
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      line-height: 1.4;
-    }
-    .tokuten-sub {
-      font-size: 13px;
-      opacity: 0.9;
-      margin-bottom: 28px;
-      line-height: 1.9;
-    }
-    .btn-white {
+      font-weight: 400;
+      color: var(--light);
       display: block;
-      background: #fff;
-      color: #B8975A;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 700;
-      padding: 16px 24px;
-      border-radius: 4px;
-      letter-spacing: 0.05em;
-      text-align: center;
     }
 
-    /* ── 口コミ ── */
-    .review-card {
-      background: #fff;
-      border: 1px solid #E8E2D8;
-      border-radius: 8px;
-      padding: 24px;
-      margin-bottom: 16px;
+    /* ── Privilege ── */
+    .privilege {
+      background: var(--dark);
+      color: var(--white);
+      padding: 64px 32px;
+      text-align: center;
     }
-    .review-stars {
-      color: #B8975A;
-      font-size: 14px;
-      margin-bottom: 10px;
-      letter-spacing: 2px;
-    }
-    .review-text {
-      font-size: 14px;
-      color: #444;
-      line-height: 1.9;
-      margin-bottom: 12px;
-    }
-    .review-meta {
-      font-size: 11px;
-      color: #999;
-    }
-    .review-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #F5EFE6;
-      border-radius: 4px;
-      padding: 10px 16px;
+    .privilege-en {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      color: var(--gold);
       margin-bottom: 24px;
     }
-    .review-badge-num {
+    .privilege-title {
       font-family: 'Noto Serif JP', serif;
-      font-size: 28px;
-      font-weight: 600;
-      color: #B8975A;
+      font-size: 20px;
+      font-weight: 300;
+      line-height: 1.8;
+      margin-bottom: 8px;
     }
-    .review-badge-text {
-      font-size: 12px;
-      color: #555;
-      line-height: 1.5;
+    .privilege-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 56px;
+      font-weight: 300;
+      color: var(--gold);
+      line-height: 1;
+      margin: 20px 0 4px;
+    }
+    .privilege-unit {
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 24px;
+    }
+    .privilege-desc {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      line-height: 2;
+      margin-bottom: 36px;
+    }
+    .btn-gold-outline {
+      display: inline-block;
+      background: transparent;
+      color: var(--gold);
+      text-decoration: none;
+      font-size: 13px;
+      letter-spacing: 0.15em;
+      padding: 16px 48px;
+      border: 1px solid var(--gold);
     }
 
-    /* ── サロン情報 ── */
-    .info-row {
-      display: flex;
-      gap: 16px;
-      padding: 14px 0;
-      border-bottom: 1px solid #E8E2D8;
-      font-size: 14px;
+    /* ── Access ── */
+    .access-info {
+      margin-top: 40px;
     }
-    .info-label {
-      color: #B8975A;
-      font-size: 12px;
-      font-weight: 700;
+    .access-row {
+      display: flex;
+      gap: 24px;
+      padding: 16px 0;
+      border-bottom: 1px solid #EDE6D8;
+      font-size: 13px;
+    }
+    .access-row:last-of-type { border-bottom: none; }
+    .access-label {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--gold);
       min-width: 72px;
       padding-top: 2px;
     }
-    .map-wrap {
+    .map {
       margin-top: 24px;
-      border-radius: 8px;
-      overflow: hidden;
+      aspect-ratio: 16/9;
+      background: #eee;
+    }
+    .map iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
     }
 
-    /* ── フッターCTA ── */
+    /* ── Footer CTA ── */
     .footer-cta {
-      background: #2C2C2C;
-      color: #fff;
-      padding: 56px 24px;
+      background: var(--cream);
+      padding: 80px 32px;
       text-align: center;
+    }
+    .footer-cta-en {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      color: var(--gold);
+      margin-bottom: 20px;
     }
     .footer-cta-title {
       font-family: 'Noto Serif JP', serif;
       font-size: 20px;
-      margin-bottom: 8px;
+      font-weight: 300;
+      line-height: 1.9;
+      margin-bottom: 12px;
     }
     .footer-cta-sub {
-      font-size: 13px;
-      opacity: 0.7;
-      margin-bottom: 32px;
+      font-size: 12px;
+      color: var(--light);
+      margin-bottom: 40px;
     }
-    .btn-line {
+    .btn-line-green {
       display: block;
       background: #06C755;
-      color: #fff;
+      color: var(--white);
       text-decoration: none;
-      font-size: 15px;
-      font-weight: 700;
-      padding: 18px 24px;
-      border-radius: 4px;
-      max-width: 360px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      padding: 18px 48px;
+      max-width: 320px;
       margin: 12px auto 0;
       text-align: center;
-      letter-spacing: 0.05em;
     }
-    .footer-copy {
+
+    /* ── Footer ── */
+    footer {
+      background: var(--dark);
+      color: rgba(255,255,255,0.4);
       text-align: center;
+      padding: 32px;
       font-size: 11px;
-      color: #999;
-      padding: 24px;
-      border-top: 1px solid #E8E2D8;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Fade in ── */
+    .fade {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
   </style>
 </head>
 <body>
 
+  <!-- Nav -->
+  <nav>
+    <a href="#" class="nav-logo">M Y S</a>
+    <a href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener" class="nav-reserve">ご予約</a>
+  </nav>
+
   <!-- Hero -->
   <div class="hero">
-    <p class="hero-label">Mys（ミース）立川</p>
-    <h1>整えるだけで、<span>−5歳。</span></h1>
-    <p class="hero-sub">
-      白髪・うねり・ボリュームのなさ——<br>
-      立川で、30〜60代の髪悩みに向き合う<br>
-      1日3名限定のプライベートサロン
-    </p>
-    <a class="btn-primary" href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener">
-      ▶ 平日限定クーポンでご予約
-    </a>
-    <a class="btn-secondary" href="https://line.me/R/ti/p/@906kdphu" target="_blank" rel="noopener">
-      LINEで相談する
-    </a>
-    <p class="hero-note">ホットペッパービューティー 24時間予約受付中</p>
+    <img class="hero-img"
+      src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=80&auto=format&fit=crop"
+      alt="Mys サロン"
+      loading="eager">
+    <div class="hero-content fade">
+      <p class="hero-en">MYS — HAIR QUALITY SPECIALIST</p>
+      <div class="gold-line"></div>
+      <p class="hero-catch">
+        <strong>艶が消えると、人は老けて見える。<br>艶が戻ると、年齢は巻き戻る。</strong>
+        うねり・パサつき・白髪・ボリュームのなさ。<br>
+        30〜60代の髪の悩みを、根本から整える。
+      </p>
+      <p class="hero-sub">
+        立川・髪質改善専門サロン<br>
+        1日3名限定のプライベート空間
+      </p>
+      <a class="btn-gold" href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener">
+        ご予約はこちら
+      </a>
+      <a class="btn-line" href="https://line.me/R/ti/p/@906kdphu" target="_blank" rel="noopener">
+        LINEで無料相談
+      </a>
+    </div>
   </div>
 
-  <!-- 悩み -->
-  <section>
-    <div class="container">
-      <p class="section-label">Trouble</p>
-      <h2 class="section-title">こんな髪の悩み<br>ありませんか？</h2>
-      <ul class="worry-list">
-        <li>白髪が気になってきた</li>
-        <li>梅雨になるとうねる・広がる</li>
-        <li>年々ボリュームがなくなってきた</li>
-        <li>染めるたびにパサつく</li>
-        <li>「もう歳だから」と諦めてる</li>
-      </ul>
-      <p class="worry-answer">それ、ぜんぶ相談できます。</p>
+  <!-- Concept -->
+  <div class="section-bg">
+    <div class="section fade">
+      <span class="sec-en">CONCEPT</span>
+      <h2 class="sec-title">毎日鏡を見るのが<br>楽しくなるような髪質へ</h2>
+      <div class="gold-line" style="margin: 0 0 40px;"></div>
+      <p class="concept-quote">
+        「もう歳だから」と諦めていた髪が、<br>
+        施術を重ねるほどに美しくなっていく。
+      </p>
+      <p class="concept-body">
+        Mys（ミース）は、立川で30〜60代の大人女性だけに向き合う、1日3名限定のプライベートサロンです。<br><br>
+        髪質改善とは、一時的にきれいに見せるのではなく、髪の内部から扱いやすい状態に変えていくこと。カラーやトリートメントを重ねるたびに、髪はより美しくなっていきます。<br><br>
+        朝のスタイリングが10分短くなる。鏡を見るのが楽しくなる。そんな毎日をつくることが、私たちの仕事です。
+      </p>
     </div>
-  </section>
+  </div>
 
-  <!-- 理由 -->
-  <section>
-    <div class="container">
-      <p class="section-label">Why Mys</p>
-      <h2 class="section-title">Mysが選ばれる<br>3つの理由</h2>
-
-      <div class="reason-card">
-        <p class="reason-num">01</p>
-        <p class="reason-title">悩みを"まとめて"扱いやすくする</p>
-        <p class="reason-body">商材や薬剤の自慢はしません。あなたが今何に困っているかをじっくり聞いて、扱いやすい髪になるまでご一緒します。</p>
-      </div>
-
-      <div class="reason-card">
-        <p class="reason-num">02</p>
-        <p class="reason-title">口コミ4.71 / 117件の実績</p>
-        <p class="reason-body">「また来たくなる」と言っていただけるサロンを目指してきた結果が、このスコアに表れています。</p>
-      </div>
-
-      <div class="reason-card">
-        <p class="reason-num">03</p>
-        <p class="reason-title">1日3名限定・完全個室マンツーマン</p>
-        <p class="reason-body">人目を気にせず、担当者がずっとそばにいます。バタバタしません。ゆっくり、じっくり。</p>
-      </div>
+  <!-- Difference -->
+  <div class="section-full">
+    <div class="section fade" style="padding-top: 0; padding-bottom: 0;">
+      <span class="sec-en">DIFFERENCE</span>
+      <h2 class="sec-title">ここが違う、<br>髪質改善専門店Mys</h2>
+      <p class="sec-lead">一般サロンと何が違うのか、正直に比較します。</p>
     </div>
-  </section>
-
-  <!-- メニュー -->
-  <section>
-    <div class="container">
-      <p class="section-label">Menu</p>
-      <h2 class="section-title">悩み別メニュー</h2>
-
-      <div class="menu-card">
-        <div class="menu-info">
-          <p class="menu-tag">白髪も気になる方へ</p>
-          <p class="menu-name">髪質改善カラーエステ</p>
+    <div style="max-width: 600px; margin: 0 auto; padding: 0 32px 88px;">
+      <div class="diff-grid fade">
+        <div class="diff-row">
+          <div class="diff-cell header">比較項目</div>
+          <div class="diff-cell header" style="color: var(--gold);">Mys</div>
+          <div class="diff-cell header">一般サロン</div>
         </div>
-        <p class="menu-price">¥12,000</p>
-      </div>
-
-      <div class="menu-card">
-        <div class="menu-info">
-          <p class="menu-tag">うねり・パサつきを卒業したい</p>
-          <p class="menu-name">髪質改善ヘアエステ＋カット</p>
+        <div class="diff-row">
+          <div class="diff-cell">1日の施術数</div>
+          <div class="diff-cell mys">3名限定</div>
+          <div class="diff-cell other">10〜20名</div>
         </div>
-        <p class="menu-price">¥14,000</p>
-      </div>
-
-      <div class="menu-card">
-        <div class="menu-info">
-          <p class="menu-tag">ふんわりツヤを取り戻したい</p>
-          <p class="menu-name">美髪トリートメント髪質改善</p>
+        <div class="diff-row">
+          <div class="diff-cell">担当者</div>
+          <div class="diff-cell mys">最初から最後まで同じ人</div>
+          <div class="diff-cell other">途中で交代あり</div>
         </div>
-        <p class="menu-price">¥13,000</p>
-      </div>
-
-      <div class="menu-card">
-        <div class="menu-info">
-          <p class="menu-tag">くせ・うねりをまっすぐに</p>
-          <p class="menu-name">髪質改善ストレートエステ＋カット</p>
+        <div class="diff-row">
+          <div class="diff-cell">カウンセリング</div>
+          <div class="diff-cell mys">じっくり時間をかける</div>
+          <div class="diff-cell other">短時間・流れ作業</div>
         </div>
-        <p class="menu-price">¥24,000</p>
-      </div>
-
-      <div style="margin-top:24px; text-align:center;">
-        <a class="btn-primary" href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener" style="display:inline-block; max-width:360px;">
-          全メニュー・クーポンを見る
-        </a>
+        <div class="diff-row">
+          <div class="diff-cell">施術後の変化</div>
+          <div class="diff-cell mys">重ねるほどきれいに</div>
+          <div class="diff-cell other">一時的な効果</div>
+        </div>
+        <div class="diff-row">
+          <div class="diff-cell">空間</div>
+          <div class="diff-cell mys">完全個室・プライベート</div>
+          <div class="diff-cell other">オープンスペース</div>
+        </div>
+        <div class="diff-row">
+          <div class="diff-cell">口コミ</div>
+          <div class="diff-cell mys">★4.71（117件）</div>
+          <div class="diff-cell other">—</div>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- 平日特典 -->
-  <section>
-    <div class="container">
-      <p class="section-label">Weekday Privilege</p>
-      <h2 class="section-title">平日に来るメリット</h2>
-      <div class="tokuten">
-        <p class="tokuten-label">WEEKDAY 10:00〜15:00</p>
-        <p class="tokuten-title">ヘッドスパ10分<br>プレゼント中</p>
-        <p class="tokuten-sub">
-          平日はお席にゆとりがあり、<br>
-          いつもよりゆっくりお過ごしいただけます。<br>
-          「平日のほうがリラックスできる」という<br>
-          お客様の声からはじめた特典です。
-        </p>
-        <a class="btn-white" href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener">
-          平日クーポンでご予約
-        </a>
+  <!-- Steps -->
+  <div class="section-beige">
+    <div class="section fade">
+      <span class="sec-en">PROCESS</span>
+      <h2 class="sec-title">Mysの施術プロセス</h2>
+      <p class="sec-lead">髪の状態を丁寧に見極め、一人ひとりに合わせて施術します。</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">01</div>
+          <div class="step-body">
+            <p class="step-title">カウンセリング</p>
+            <p class="step-desc">今の髪の状態、普段のお手入れ、なりたいイメージを丁寧にヒアリング。「何に困っているか」から始めます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <div class="step-body">
+            <p class="step-title">髪質診断</p>
+            <p class="step-desc">うねり・パサつき・白髪・ダメージの状態を見極め、最適な施術メニューを提案します。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <div class="step-body">
+            <p class="step-title">前処理トリートメント</p>
+            <p class="step-desc">髪の内部を整えてから施術に入ることで、効果の持続性を高めます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">04</div>
+          <div class="step-body">
+            <p class="step-title">薬剤塗布</p>
+            <p class="step-desc">髪の状態に合わせて調合した薬剤を、均一に塗布します。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">05</div>
+          <div class="step-body">
+            <p class="step-title">加温・浸透</p>
+            <p class="step-desc">適切な温度と時間で薬剤を浸透させ、髪質改善の効果を最大化します。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">06</div>
+          <div class="step-body">
+            <p class="step-title">流し・洗浄</p>
+            <p class="step-desc">余分な薬剤を丁寧に洗い流し、髪への負担を最小限にします。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">07</div>
+          <div class="step-body">
+            <p class="step-title">仕上げトリートメント</p>
+            <p class="step-desc">髪表面にツヤと保護膜をつくり、施術効果を閉じ込めます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">08</div>
+          <div class="step-body">
+            <p class="step-title">カット・スタイリング</p>
+            <p class="step-desc">骨格と髪質に合わせたカットで、扱いやすさをさらに高めます。</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">09</div>
+          <div class="step-body">
+            <p class="step-title">ホームケアアドバイス</p>
+            <p class="step-desc">サロンの効果を自宅でも続けるためのシャンプー・ケア方法をお伝えします。</p>
+          </div>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- 口コミ -->
-  <section>
-    <div class="container">
-      <p class="section-label">Voice</p>
-      <h2 class="section-title">お客様の声</h2>
+  <!-- Before/After -->
+  <div class="section-full">
+    <div class="section fade" style="padding-bottom: 0;">
+      <span class="sec-en">CASE</span>
+      <h2 class="sec-title">施術事例</h2>
+      <p class="sec-lead">同じ悩みを持つお客様が、どう変わったか。</p>
+    </div>
+    <div style="max-width: 600px; margin: 0 auto; padding: 0 32px 88px;">
+      <div class="ba-wrap fade">
 
+        <div class="ba-card">
+          <div class="ba-images">
+            <div class="ba-img-wrap">
+              <img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80&auto=format&fit=crop" alt="Before">
+              <span class="ba-label">BEFORE</span>
+            </div>
+            <div class="ba-img-wrap">
+              <img src="https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&q=80&auto=format&fit=crop" alt="After">
+              <span class="ba-label">AFTER</span>
+            </div>
+          </div>
+          <span class="ba-tag">50代 / うねり・パサつき</span>
+          <p class="ba-desc">長年悩んでいたうねりが落ち着き、朝のスタイリング時間が大幅に短縮。「鏡を見るのが楽しくなった」とのご感想をいただきました。</p>
+        </div>
+
+        <div class="ba-card">
+          <div class="ba-images">
+            <div class="ba-img-wrap">
+              <img src="https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=400&q=80&auto=format&fit=crop" alt="Before">
+              <span class="ba-label">BEFORE</span>
+            </div>
+            <div class="ba-img-wrap">
+              <img src="https://images.unsplash.com/photo-1580618432247-d3d326e19a4a?w=400&q=80&auto=format&fit=crop" alt="After">
+              <span class="ba-label">AFTER</span>
+            </div>
+          </div>
+          <span class="ba-tag">40代 / 白髪・ボリューム不足</span>
+          <p class="ba-desc">白髪を活かしながらツヤを出す髪質改善カラーを施術。ボリュームも改善され、若々しい印象に。</p>
+        </div>
+
+        <div class="ba-card">
+          <div class="ba-images">
+            <div class="ba-img-wrap">
+              <img src="https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=400&q=80&auto=format&fit=crop" alt="Before">
+              <span class="ba-label">BEFORE</span>
+            </div>
+            <div class="ba-img-wrap">
+              <img src="https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=400&q=80&auto=format&fit=crop" alt="After">
+              <span class="ba-label">AFTER</span>
+            </div>
+          </div>
+          <span class="ba-tag">60代 / くせ毛・広がり</span>
+          <p class="ba-desc">縮毛矯正ではなく髪質改善ストレートで自然なまとまりを実現。ダメージゼロで扱いやすい髪になりました。</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Reviews -->
+  <div class="section-bg">
+    <div class="section fade">
+      <span class="sec-en">VOICE</span>
+      <h2 class="sec-title">お客様の声</h2>
       <div class="review-badge">
-        <p class="review-badge-num">4.71</p>
-        <div class="review-badge-text">
-          <span style="color:#B8975A;">★★★★★</span><br>
-          117件の口コミ（Google）
+        <div class="review-score">4.71</div>
+        <div class="review-meta">
+          ★★★★★<br>
+          Googleクチコミ 117件
         </div>
       </div>
-
-      <div class="review-card">
-        <p class="review-stars">★★★★★</p>
-        <p class="review-text">うねりとパサつきに長年悩んでいましたが、施術後は別の髪のようにまとまりました。カウンセリングがとても丁寧で、自分の髪の状態を初めてちゃんと理解できた気がします。</p>
-        <p class="review-meta">50代・立川市／髪質改善ヘアエステ＋カット</p>
-      </div>
-
-      <div class="review-card">
-        <p class="review-stars">★★★★★</p>
-        <p class="review-text">白髪が気になり始めてから色々なサロンを試しましたが、ここが一番「髪が綺麗になった」と実感できました。完全個室なので周りを気にせずゆっくり過ごせるのも嬉しいです。</p>
-        <p class="review-meta">40代・国立市／髪質改善カラーエステ</p>
-      </div>
-
-      <div class="review-card">
-        <p class="review-stars">★★★★★</p>
-        <p class="review-text">平日の昼間に来ましたが、ゆったりしていてとても心地よかったです。ヘッドスパのサービスもついていて、お得感もありました。また平日に来ようと思います。</p>
-        <p class="review-meta">60代・日野市／髪質改善ヘアエステ</p>
+      <div class="review-list">
+        <div class="review-card">
+          <p class="review-stars">★★★★★</p>
+          <p class="review-text">うねりとパサつきに長年悩んでいましたが、施術後は別の髪のようにまとまりました。カウンセリングがとても丁寧で、自分の髪の状態を初めてちゃんと理解できた気がします。また次回も絶対にここに来ます。</p>
+          <p class="review-who">50代・立川市 / 髪質改善ヘアエステ＋カット</p>
+        </div>
+        <div class="review-card">
+          <p class="review-stars">★★★★★</p>
+          <p class="review-text">白髪が気になり始めてから色々なサロンを試しましたが、ここが一番「髪が綺麗になった」と実感できました。完全個室なので周りを気にせずゆっくり過ごせるのも嬉しいです。施術中もずっと同じ方が担当してくださって安心でした。</p>
+          <p class="review-who">40代・国立市 / 髪質改善カラーエステ</p>
+        </div>
+        <div class="review-card">
+          <p class="review-stars">★★★★★</p>
+          <p class="review-text">平日の昼間に来ましたが、ゆったりしていてとても心地よかったです。混まないのでじっくり相談できて、担当の方が私の髪の悩みをしっかり聞いてくださいました。帰り道、ずっと髪を触っていました（笑）</p>
+          <p class="review-who">60代・日野市 / 髪質改善ヘアエステ</p>
+        </div>
+        <div class="review-card">
+          <p class="review-stars">★★★★★</p>
+          <p class="review-text">縮毛矯正は何度もやってきましたが、Mysさんの髪質改善ストレートは仕上がりが全然違います。自然なまとまりで、硬くならない。家でのスタイリングもとても楽になりました。</p>
+          <p class="review-who">50代・八王子市 / 髪質改善ストレートエステ</p>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- サロン情報 -->
-  <section>
-    <div class="container">
-      <p class="section-label">Access</p>
-      <h2 class="section-title">サロン情報</h2>
+  <!-- Menu -->
+  <div class="section-full">
+    <div class="section fade">
+      <span class="sec-en">MENU</span>
+      <h2 class="sec-title">メニュー・料金</h2>
+      <p class="sec-lead">お悩みに合わせてご提案します。<br>まずはカウンセリングでご相談ください。</p>
+      <div class="menu-list">
+        <div class="menu-item">
+          <div class="menu-info">
+            <p class="menu-tag">白髪も気になる方へ</p>
+            <p class="menu-name">髪質改善カラーエステ</p>
+            <p class="menu-note">染めるたびに髪がきれいになる</p>
+          </div>
+          <div class="menu-price">¥12,000<span>カット別</span></div>
+        </div>
+        <div class="menu-item">
+          <div class="menu-info">
+            <p class="menu-tag">うねり・パサつきを卒業したい</p>
+            <p class="menu-name">髪質改善ヘアエステ＋カット</p>
+            <p class="menu-note">ツヤとまとまりを取り戻す</p>
+          </div>
+          <div class="menu-price">¥14,000<span>カット込み</span></div>
+        </div>
+        <div class="menu-item">
+          <div class="menu-info">
+            <p class="menu-tag">ふんわりツヤ髪に</p>
+            <p class="menu-name">美髪トリートメント髪質改善</p>
+            <p class="menu-note">ボリューム・ツヤをプラス</p>
+          </div>
+          <div class="menu-price">¥13,000<span>カット別</span></div>
+        </div>
+        <div class="menu-item">
+          <div class="menu-info">
+            <p class="menu-tag">くせ・うねりをまっすぐに</p>
+            <p class="menu-name">髪質改善ストレートエステ＋カット</p>
+            <p class="menu-note">自然なまとまり・ダメージ最小限</p>
+          </div>
+          <div class="menu-price">¥24,000<span>カット込み</span></div>
+        </div>
+        <div class="menu-item">
+          <div class="menu-info">
+            <p class="menu-tag">前髪だけ整えたい</p>
+            <p class="menu-name">前髪縮毛矯正×カット</p>
+            <p class="menu-note">気になる前髪のうねりだけ</p>
+          </div>
+          <div class="menu-price">¥21,000<span>カット込み</span></div>
+        </div>
+        <div class="menu-item">
+          <div class="menu-info">
+            <p class="menu-tag">白髪・ボリュームをカバー</p>
+            <p class="menu-name">大人女性の似合わせカット</p>
+            <p class="menu-note">骨格に合わせた似合わせ</p>
+          </div>
+          <div class="menu-price">¥5,000〜<span></span></div>
+        </div>
+      </div>
+      <div style="margin-top: 40px; text-align: center;">
+        <a class="btn-gold" href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener" style="display: inline-block;">
+          クーポン・予約を見る
+        </a>
+      </div>
+    </div>
+  </div>
 
-      <div class="info-row">
-        <p class="info-label">サロン名</p>
-        <p>Mys（ミース）</p>
-      </div>
-      <div class="info-row">
-        <p class="info-label">住所</p>
-        <p>東京都立川市柴崎町2-11-20<br>スマイル立川2F</p>
-      </div>
-      <div class="info-row">
-        <p class="info-label">アクセス</p>
-        <p>立川南駅 徒歩2分</p>
-      </div>
-      <div class="info-row">
-        <p class="info-label">営業時間</p>
-        <p>10:00〜19:00</p>
-      </div>
-      <div class="info-row" style="border-bottom:none;">
-        <p class="info-label">定休日</p>
-        <p>なし</p>
-      </div>
+  <!-- Privilege -->
+  <div class="privilege">
+    <p class="privilege-en">WEEKDAY PRIVILEGE</p>
+    <p class="privilege-title">平日10:00〜15:00ご来店の方へ</p>
+    <p class="privilege-num">10</p>
+    <p class="privilege-unit">分のヘッドスパ、プレゼント中</p>
+    <p class="privilege-desc">
+      平日はお席にゆとりがあり、<br>
+      いつもよりじっくりカウンセリングができます。<br>
+      「平日のほうがリラックスできる」という<br>
+      お客様の声から始めた特典です。
+    </p>
+    <a class="btn-gold-outline" href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener">
+      平日クーポンを見る
+    </a>
+  </div>
 
-      <div class="map-wrap">
+  <!-- Access -->
+  <div class="section-full">
+    <div class="section fade">
+      <span class="sec-en">ACCESS</span>
+      <h2 class="sec-title">サロン情報</h2>
+      <div class="access-info">
+        <div class="access-row">
+          <p class="access-label">サロン</p>
+          <p>Mys（ミース）</p>
+        </div>
+        <div class="access-row">
+          <p class="access-label">住所</p>
+          <p>東京都立川市柴崎町2-11-20<br>スマイル立川2F</p>
+        </div>
+        <div class="access-row">
+          <p class="access-label">アクセス</p>
+          <p>立川南駅 徒歩2分</p>
+        </div>
+        <div class="access-row">
+          <p class="access-label">営業時間</p>
+          <p>10:00〜19:00</p>
+        </div>
+        <div class="access-row">
+          <p class="access-label">定休日</p>
+          <p>なし</p>
+        </div>
+        <div class="access-row">
+          <p class="access-label">予約</p>
+          <p>完全予約制（ホットペッパー / LINE）</p>
+        </div>
+      </div>
+      <div class="map">
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3239.847!2d139.4139!3d35.6928!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6018d7ef5aee6ed3%3A0x94f9d6e5d2c9e0a!2z5p2x5bed5biC5p-h5bGx55S677yS5LiB55uu77yR77yR4oiS77yS77yQ!5e0!3m2!1sja!2sjp!4v1687000000000"
-          width="100%"
-          height="220"
-          style="border:0; display:block;"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d810.0!2d139.41395!3d35.69283!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6018d7f0b5a5a5a5%3A0x0!2z5p2x5bed5biC5p-h5bGx55S677yS5LiB55uu77yR77yR4oiS77yS77yM44K544Oe44Kk44Or5Yy65bed77yS5LiB!5e0!3m2!1sja!2sjp"
           allowfullscreen=""
           loading="lazy"
           referrerpolicy="no-referrer-when-downgrade">
         </iframe>
       </div>
     </div>
-  </section>
-
-  <!-- フッターCTA -->
-  <div class="footer-cta">
-    <div class="container">
-      <p class="footer-cta-title">髪のことで迷ったら、<br>まずご相談ください。</p>
-      <p class="footer-cta-sub">カウンセリングだけでも大歓迎です</p>
-      <a class="btn-primary" href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener">
-        ホットペッパーから予約する（24時間）
-      </a>
-      <a class="btn-line" href="https://line.me/R/ti/p/@906kdphu" target="_blank" rel="noopener">
-        LINEで気軽に相談する
-      </a>
-    </div>
   </div>
 
-  <p class="footer-copy">© Mys（ミース）立川 髪質改善専門サロン</p>
+  <!-- Footer CTA -->
+  <div class="footer-cta">
+    <p class="footer-cta-en">RESERVATION</p>
+    <p class="footer-cta-title">
+      まずは、カウンセリングから。<br>
+      髪のことで迷ったら、気軽にご相談ください。
+    </p>
+    <p class="footer-cta-sub">ホットペッパービューティー 24時間受付 / LINEでも受付中</p>
+    <a class="btn-gold" href="https://beauty.hotpepper.jp/slnH000721782/" target="_blank" rel="noopener">
+      ホットペッパーから予約する
+    </a>
+    <a class="btn-line-green" href="https://line.me/R/ti/p/@906kdphu" target="_blank" rel="noopener">
+      LINEで気軽に相談する
+    </a>
+  </div>
+
+  <footer>
+    <p>© Mys（ミース）立川 髪質改善専門サロン</p>
+  </footer>
+
+  <script>
+    const fades = document.querySelectorAll('.fade');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    fades.forEach(el => observer.observe(el));
+  </script>
 
 </body>
 </html>
