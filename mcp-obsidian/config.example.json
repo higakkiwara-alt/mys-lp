@@ -1,0 +1,28 @@
+{
+  "vaults": [
+    {
+      "name": "main",
+      "path": "/Users/YOUR_USERNAME/Library/Mobile Documents/iCloud~md~obsidian/Documents/YOUR_VAULT_NAME",
+      "description": "メインVault"
+    }
+  ],
+  "security": {
+    "readOnly": true,
+    "excludePaths": [
+      ".obsidian",
+      ".git",
+      ".trash",
+      "Private",
+      "Confidential",
+      "personal"
+    ],
+    "maxResults": 50,
+    "maxFileSize": 1048576,
+    "allowedExtensions": [".md", ".txt", ".canvas"]
+  },
+  "search": {
+    "caseSensitive": false,
+    "maxDepth": 10,
+    "contextLines": 3
+  }
+}
