@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { requireAuth, requireAuthFromRequest } from "@/lib/auth";
 import { generateContent } from "@/lib/claude";
 
 const MOCK_MATERIALS = [
@@ -15,7 +17,30 @@ const MOCK_QA = [
   { id: "3", question: "Aujuaのプログラム選定基準は？", answer: "髪の状態（損傷度・水分量・柔軟性）と頭皮の状態（皮脂量・乾燥度）を診断し、4プログラムから最適を選びます。", category: "商材" },
 ];
 
+const CATEGORY_VALUES = ["技術", "商材", "接客", "マーケ", "一般"] as const;
+const LEVEL_VALUES = ["beginner", "intermediate", "advanced"] as const;
+
+const postSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("answer"),
+    question: z.string().min(1).max(500),
+    category: z.enum(CATEGORY_VALUES).optional(),
+  }),
+  z.object({
+    action: z.literal("create-material"),
+    topic: z.string().min(1).max(200),
+    level: z.enum(LEVEL_VALUES).optional(),
+  }),
+]);
+
+function sanitize(s: string): string {
+  return s.replace(/<[^>]*>/g, "").slice(0, 500);
+}
+
 export async function GET() {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const stats = {
     totalMaterials: MOCK_MATERIALS.length,
     totalViews: MOCK_MATERIALS.reduce((s, m) => s + m.views, 0),
@@ -27,26 +52,40 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { action, question, category, topic, level } = await req.json();
+  const authError = requireAuthFromRequest(req);
+  if (authError) return authError;
 
-  if (action === "answer" && question) {
-    const answer = await generateContent(
-      question,
-      `あなたはMys（ミース）立川の美容師研修AI。髪質改善・縮毛矯正・接客・マーケの専門知識で回答。300字以内。カテゴリ: ${category ?? "一般"}`
-    );
-    return NextResponse.json({ question, answer, category: category ?? "一般" });
-  }
+  try {
+    const body = await req.json();
+    const parsed = postSchema.parse(body);
 
-  if (action === "create-material" && topic) {
-    const content = await generateContent(
-      `美容師研修教材を作成。トピック: ${topic}。レベル: ${level ?? "beginner"}。
+    if (parsed.action === "answer") {
+      const safeQuestion = sanitize(parsed.question);
+      const answer = await generateContent(
+        safeQuestion,
+        `あなたはMys（ミース）立川の美容師研修AI。髪質改善・縮毛矯正・接客・マーケの専門知識で回答。300字以内。カテゴリ: ${parsed.category ?? "一般"}`
+      );
+      return NextResponse.json({ question: safeQuestion, answer, category: parsed.category ?? "一般" });
+    }
+
+    if (parsed.action === "create-material") {
+      const safeTopic = sanitize(parsed.topic);
+      const content = await generateContent(
+        `美容師研修教材を作成。トピック: ${safeTopic}。レベル: ${parsed.level ?? "beginner"}。
 構成: 概要・手順・注意点・確認クイズ3問。800字以上の詳細な研修テキスト。`
-    );
-    const quiz = await generateContent(
-      `「${topic}」の確認クイズ3問をJSON形式で作成。[{"q": "問題文", "options": ["A","B","C","D"], "answer": "A"}]`
-    );
-    const quizParsed = JSON.parse(quiz.match(/\[[\s\S]*\]/)?.[0] ?? "[]");
-    return NextResponse.json({ title: topic, content, quiz: quizParsed, level: level ?? "beginner" });
+      );
+      const quiz = await generateContent(
+        `「${safeTopic}」の確認クイズ3問をJSON形式で作成。[{"q": "問題文", "options": ["A","B","C","D"], "answer": "A"}]`
+      );
+      const quizParsed = JSON.parse(quiz.match(/\[[\s\S]*\]/)?.[0] ?? "[]");
+      return NextResponse.json({ title: safeTopic, content, quiz: quizParsed, level: parsed.level ?? "beginner" });
+    }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+    console.error("[training]", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });

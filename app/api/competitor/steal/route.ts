@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { requireAuth, requireAuthFromRequest } from "@/lib/auth";
 import { generateContent } from "@/lib/claude";
 
 const MOCK_NEGATIVE_REVIEWS = [
@@ -28,7 +30,24 @@ const MOCK_ADS = [
   },
 ];
 
+const postSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("generate-ad"),
+    painPoint: z.string().min(1).max(300),
+  }),
+  z.object({
+    action: z.literal("analyze-competitors"),
+  }),
+]);
+
+function sanitize(s: string): string {
+  return s.replace(/<[^>]*>/g, "").slice(0, 300);
+}
+
 export async function GET() {
+  const authError = await requireAuth();
+  if (authError) return authError;
+
   const painPoints = [
     { pain: "縮毛矯正の失敗・持ちが悪い", count: 2, competitors: ["立川ヘアサロンA"] },
     { pain: "スタッフ対応・予約管理", count: 2, competitors: ["立川ヘアサロンA", "ヘアサロンC 立川"] },
@@ -39,23 +58,38 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { action, painPoint } = await req.json();
+  const authError = requireAuthFromRequest(req);
+  if (authError) return authError;
 
-  if (action === "generate-ad" && painPoint) {
-    const prompt = `競合他社の口コミから発見した顧客の不満に対応するMys（ミース）の広告コピーを作成。
-顧客の不満: ${painPoint}
+  try {
+    const body = await req.json();
+    const parsed = postSchema.parse(body);
+
+    if (parsed.action === "generate-ad") {
+      const safePain = sanitize(parsed.painPoint);
+      const prompt = `競合他社の口コミから発見した顧客の不満に対応するMys（ミース）の広告コピーを作成。
+顧客の不満: ${safePain}
 広告形式: {"headline": "30字以内", "body": "150字以内", "cta": "行動喚起15字以内", "platform": "Instagram"}`;
-    const raw = await generateContent(prompt);
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    const ad = jsonMatch ? JSON.parse(jsonMatch[0]) : { headline: raw.slice(0, 30), body: raw, cta: "今すぐ予約", platform: "Instagram" };
-    return NextResponse.json({ ad });
-  }
+      const raw = await generateContent(prompt);
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const ad = jsonMatch
+        ? JSON.parse(jsonMatch[0])
+        : { headline: raw.slice(0, 30), body: raw, cta: "今すぐ予約", platform: "Instagram" };
+      return NextResponse.json({ ad });
+    }
 
-  if (action === "analyze-competitors") {
-    const summary = await generateContent(
-      `競合他社の低評価口コミを分析: ${MOCK_NEGATIVE_REVIEWS.map((r) => r.text).join("、")}。Mysが差別化できるポイントを3つ提案。`
-    );
-    return NextResponse.json({ summary, painPoints: MOCK_NEGATIVE_REVIEWS });
+    if (parsed.action === "analyze-competitors") {
+      const summary = await generateContent(
+        `競合他社の低評価口コミを分析: ${MOCK_NEGATIVE_REVIEWS.map((r) => r.text).join("、")}。Mysが差別化できるポイントを3つ提案。`
+      );
+      return NextResponse.json({ summary, painPoints: MOCK_NEGATIVE_REVIEWS });
+    }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+    console.error("[competitor/steal]", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });

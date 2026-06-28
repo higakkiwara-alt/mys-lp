@@ -5,9 +5,19 @@ import { NextRequest, NextResponse } from "next/server";
 // For production at scale, replace with Vercel KV / Upstash Redis
 // ---------------------------------------------------------------------------
 const rlMap = new Map<string, { count: number; resetAt: number }>();
+let lastCleanup = 0;
 
 function checkRate(key: string, limit: number, windowMs: number): boolean {
   const now = Date.now();
+
+  // Prune expired entries periodically to prevent unbounded memory growth
+  if (now - lastCleanup > 60_000) {
+    lastCleanup = now;
+    for (const [k, v] of rlMap) {
+      if (v.resetAt < now) rlMap.delete(k);
+    }
+  }
+
   const entry = rlMap.get(key);
   if (!entry || entry.resetAt < now) {
     rlMap.set(key, { count: 1, resetAt: now + windowMs });
@@ -129,6 +139,16 @@ export async function middleware(req: NextRequest) {
     pathname.match(/\.(jpg|jpeg|png|gif|svg|ico|webp|woff2?|ttf)$/)
   ) {
     return NextResponse.next();
+  }
+
+  // HTTP → HTTPS redirect in production
+  if (
+    process.env.NODE_ENV === "production" &&
+    req.headers.get("x-forwarded-proto") === "http"
+  ) {
+    const httpsUrl = new URL(req.url);
+    httpsUrl.protocol = "https:";
+    return NextResponse.redirect(httpsUrl, 301);
   }
 
   const ip = getIp(req);

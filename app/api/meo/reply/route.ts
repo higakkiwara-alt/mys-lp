@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const schema = z.object({
-  author: z.string(),
+  author: z.string().min(1).max(100),
   rating: z.number().int().min(1).max(5),
-  text: z.string(),
+  text: z.string().min(1).max(500),
 });
 
 export async function POST(req: NextRequest) {
