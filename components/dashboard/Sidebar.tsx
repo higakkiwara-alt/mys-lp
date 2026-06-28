@@ -97,8 +97,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           <Settings size={14} />
           <span className="text-xs">設定・API キー</span>
         </Link>
+        <Link href="/ai-os" onClick={onClose} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
+          <span className="text-[10px] text-gray-600">AI Salon OS 紹介ページ</span>
+        </Link>
         <Link href="/" onClick={onClose} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
-          <span className="text-[10px] text-gray-600">← LP に戻る</span>
+          <span className="text-[10px] text-gray-600">← サロンサイトへ</span>
         </Link>
       </div>
     </aside>

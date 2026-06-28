@@ -63,15 +63,30 @@ function PriorityBadge({ priority }: { priority: string }) {
   );
 }
 
+type DigestResult = {
+  achievements: string[];
+  tasks: Array<{ priority: string; task: string; module: string }>;
+  improvements: string[];
+  alert?: string;
+};
+
 export default function DigestPage() {
   const [loading, setLoading] = useState(false);
-  const [generated, setGenerated] = useState(false);
+  const [digest, setDigest] = useState<DigestResult | null>(null);
 
   const handleGenerate = async () => {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 2000));
-    setLoading(false);
-    setGenerated(true);
+    try {
+      const res = await fetch("/api/digest");
+      if (res.ok) {
+        const data = await res.json();
+        setDigest(data);
+      }
+    } catch {
+      // fall through — keep showing static data
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -189,9 +204,49 @@ export default function DigestPage() {
         </div>
       </div>
 
-      {generated && (
-        <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
-          <p className="text-sm text-emerald-400">✓ 最新のDigestを生成しました。Claude APIを接続するとリアルデータで動作します。</p>
+      {digest && (
+        <div className="mt-6 space-y-4">
+          {digest.alert && (
+            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
+              <AlertCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-300">{digest.alert}</p>
+            </div>
+          )}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="dashboard-card">
+              <p className="text-xs text-gold tracking-widest uppercase mb-3">昨日の成果</p>
+              <ul className="space-y-2">
+                {digest.achievements.map((a, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                    <CheckCircle2 size={13} className="text-emerald-400 shrink-0 mt-0.5" />
+                    {a}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="dashboard-card">
+              <p className="text-xs text-gold tracking-widest uppercase mb-3">今日のタスク（AI生成）</p>
+              <ul className="space-y-2">
+                {digest.tasks.map((t, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                    <PriorityBadge priority={t.priority} />
+                    <span>{t.task}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="dashboard-card">
+              <p className="text-xs text-gold tracking-widest uppercase mb-3">改善提案</p>
+              <ul className="space-y-2">
+                {digest.improvements.map((imp, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                    <Zap size={12} className="text-gold shrink-0 mt-0.5" />
+                    {imp}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       )}
     </div>
