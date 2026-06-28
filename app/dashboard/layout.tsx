@@ -1,21 +1,24 @@
-import type { Metadata } from "next";
+"use client";
+import { useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
+import MobileHeader from "@/components/dashboard/MobileHeader";
+import DemoBanner from "@/components/dashboard/DemoBanner";
 
-export const metadata: Metadata = {
-  title: "Dashboard | Mys AI Salon OS",
-};
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
   return (
-    <div className="flex h-screen bg-[#12121A] text-white overflow-hidden">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto dashboard-scroll">
-        {children}
-      </main>
+    <div className="flex flex-col h-screen bg-[#12121A] text-white overflow-hidden">
+      <DemoBanner />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <MobileHeader onOpen={() => setSidebarOpen(true)} />
+          <main className="flex-1 overflow-y-auto dashboard-scroll">
+            {children}
+          </main>
+        </div>
+      </div>
     </div>
   );
 }
