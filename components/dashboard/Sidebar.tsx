@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Share2, MapPin, FileText, TrendingUp,
   Image, Brain, Settings, ChevronRight, Zap, Users,
-  Heart, Star, DollarSign, Bot, Target, Building2, BookOpen, Mic
+  Heart, Star, DollarSign, Bot, Target, Building2, BookOpen, Mic, X
 } from "lucide-react";
 
 const OPERATIONS_NAV = [
@@ -30,7 +30,12 @@ const GROWTH_NAV = [
   { href: "/dashboard/saas", icon: Building2, label: "SaaS Console", desc: "クライアント管理" },
 ];
 
-export default function Sidebar() {
+type SidebarProps = {
+  open?: boolean;
+  onClose?: () => void;
+};
+
+export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   const NavLink = ({ href, icon: Icon, label, desc }: { href: string; icon: React.ElementType; label: string; desc: string }) => {
@@ -38,18 +43,14 @@ export default function Sidebar() {
     return (
       <Link
         href={href}
+        onClick={onClose}
         className={`flex items-center gap-2.5 px-5 py-2 group transition-all duration-150 ${
           active ? "bg-gold/10 border-r-2 border-gold" : "hover:bg-white/4"
         }`}
       >
-        <Icon
-          size={14}
-          className={active ? "text-gold" : "text-gray-500 group-hover:text-gray-300"}
-        />
+        <Icon size={14} className={active ? "text-gold" : "text-gray-500 group-hover:text-gray-300"} />
         <div className="flex-1 min-w-0">
-          <p className={`text-[12px] font-medium truncate leading-tight ${
-            active ? "text-white" : "text-gray-400 group-hover:text-white"
-          }`}>
+          <p className={`text-[12px] font-medium truncate leading-tight ${active ? "text-white" : "text-gray-400 group-hover:text-white"}`}>
             {label}
           </p>
           <p className="text-[9px] text-gray-600 truncate">{desc}</p>
@@ -59,10 +60,10 @@ export default function Sidebar() {
     );
   };
 
-  return (
-    <aside className="w-60 h-screen bg-[#0F0F1A] border-r border-[#1E1E2E] flex flex-col overflow-hidden sticky top-0 shrink-0">
+  const sidebarContent = (
+    <aside className="w-60 h-full bg-[#0F0F1A] border-r border-[#1E1E2E] flex flex-col overflow-hidden">
       {/* Logo */}
-      <div className="p-5 border-b border-[#1E1E2E]">
+      <div className="p-5 border-b border-[#1E1E2E] flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gold rounded-sm flex items-center justify-center">
             <Zap size={15} className="text-white" />
@@ -72,6 +73,12 @@ export default function Sidebar() {
             <p className="text-[9px] text-gold tracking-widest uppercase">AI Salon OS</p>
           </div>
         </div>
+        {/* Mobile close button */}
+        {onClose && (
+          <button onClick={onClose} className="lg:hidden p-1 text-gray-500 hover:text-white">
+            <X size={16} />
+          </button>
+        )}
       </div>
 
       {/* Nav */}
@@ -85,19 +92,34 @@ export default function Sidebar() {
 
       {/* Bottom */}
       <div className="p-3 border-t border-[#1E1E2E] space-y-1">
-        <Link
-          href="/dashboard/settings"
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors ${
-            pathname === "/dashboard/settings" ? "bg-gold/10 text-gold" : "text-gray-500"
-          }`}
-        >
+        <Link href="/dashboard/settings" onClick={onClose}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors ${pathname === "/dashboard/settings" ? "bg-gold/10 text-gold" : "text-gray-500"}`}>
           <Settings size={14} />
           <span className="text-xs">設定・API キー</span>
         </Link>
-        <Link href="/" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
+        <Link href="/" onClick={onClose} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
           <span className="text-[10px] text-gray-600">← LP に戻る</span>
         </Link>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Desktop: always visible */}
+      <div className="hidden lg:flex h-screen sticky top-0 shrink-0">
+        {sidebarContent}
+      </div>
+
+      {/* Mobile: overlay */}
+      {open && (
+        <div className="lg:hidden fixed inset-0 z-40 flex">
+          <div className="fixed inset-0 bg-black/60" onClick={onClose} />
+          <div className="relative z-50 h-full">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
