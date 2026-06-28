@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { FileText, TrendingUp, TrendingDown, Minus, Sparkles, Loader2, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { FileText, TrendingUp, TrendingDown, Minus, Sparkles, Loader2, ExternalLink, Search } from "lucide-react";
 
 const KEYWORDS = [
   { keyword: "縮毛矯正 立川", rank: 3, prev: 4, volume: 1200, url: "https://mys-salon.com/縮毛矯正-立川" },
@@ -39,7 +39,33 @@ export default function SeoPage() {
   const [keyword, setKeyword] = useState("");
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState<{ title: string; outline: string[] } | null>(null);
-  const [activeTab, setActiveTab] = useState<"keywords" | "blog">("keywords");
+  const [activeTab, setActiveTab] = useState<"keywords" | "blog" | "longtail">("keywords");
+  const [longtailKeywords, setLongtailKeywords] = useState<{ keyword: string; volume: number; difficulty: number; intent: string; article: string | null }[]>([]);
+  const [longtailLoading, setLongtailLoading] = useState(false);
+  const [longtailGenerating, setLongtailGenerating] = useState<string | null>(null);
+  const [generatedArticle, setGeneratedArticle] = useState<{ keyword: string; title: string; content: string } | null>(null);
+
+  useEffect(() => {
+    if (activeTab === "longtail" && longtailKeywords.length === 0) {
+      setLongtailLoading(true);
+      fetch("/api/seo/longtail")
+        .then((r) => r.json())
+        .then((d) => setLongtailKeywords(d.longtailKeywords ?? []))
+        .finally(() => setLongtailLoading(false));
+    }
+  }, [activeTab, longtailKeywords.length]);
+
+  const handleGenerateArticle = async (kw: string) => {
+    setLongtailGenerating(kw);
+    setGeneratedArticle(null);
+    const res = await fetch("/api/seo/longtail", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "generate-article", keyword: kw }),
+    });
+    if (res.ok) { const d = await res.json(); setGeneratedArticle(d); }
+    setLongtailGenerating(null);
+  };
 
   const handleGenerate = async () => {
     if (!keyword.trim()) return;
@@ -72,7 +98,7 @@ export default function SeoPage() {
 
       {/* Tabs */}
       <div className="flex gap-2 mb-6">
-        {(["keywords", "blog"] as const).map((tab) => (
+        {(["keywords", "blog", "longtail"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -80,7 +106,7 @@ export default function SeoPage() {
               activeTab === tab ? "bg-gold/20 text-gold border border-gold/30" : "bg-[#1E1E2E] text-gray-400 border border-[#2A2A3E]"
             }`}
           >
-            {tab === "keywords" ? "キーワード順位管理" : "AI ブログ生成"}
+            {tab === "keywords" ? "キーワード順位管理" : tab === "blog" ? "AI ブログ生成" : "ロングテール発掘"}
           </button>
         ))}
       </div>
@@ -139,6 +165,56 @@ export default function SeoPage() {
               💡 「髪質改善 立川」が5位→7位に低下。既存記事のリライトと内部リンク強化を推奨します。
             </p>
           </div>
+        </div>
+      )}
+
+      {activeTab === "longtail" && (
+        <div className="space-y-4">
+          {longtailLoading ? (
+            <div className="flex items-center gap-2 text-gray-500"><Loader2 size={16} className="animate-spin" />キーワードを読み込み中...</div>
+          ) : (
+            <div className="dashboard-card">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm font-medium text-white flex items-center gap-2"><Search size={14} className="text-gold" />ロングテールキーワード</p>
+                <span className="text-xs text-gray-500">{longtailKeywords.length}件発見</span>
+              </div>
+              <div className="space-y-2">
+                {longtailKeywords.map((kw) => (
+                  <div key={kw.keyword} className="flex items-center gap-4 p-3 bg-[#12121A] rounded-lg">
+                    <div className="flex-1">
+                      <p className="text-sm text-white">{kw.keyword}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-[10px] text-gray-500">月間 {kw.volume}件</span>
+                        <span className="text-[10px] text-gray-500">難易度 {kw.difficulty}</span>
+                        <span className="text-[9px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded">{kw.intent}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {kw.article && <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded">記事あり</span>}
+                      <button onClick={() => handleGenerateArticle(kw.keyword)} disabled={longtailGenerating === kw.keyword}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-gold/10 border border-gold/30 text-gold rounded-lg text-xs hover:bg-gold/20 disabled:opacity-50">
+                        {longtailGenerating === kw.keyword ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                        記事生成
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {generatedArticle && (
+            <div className="dashboard-card border-l-2 border-gold">
+              <p className="text-xs text-gold mb-2">生成記事: {generatedArticle.keyword}</p>
+              <p className="text-sm font-bold text-white mb-3">{generatedArticle.title}</p>
+              <div className="max-h-64 overflow-y-auto dashboard-scroll">
+                <p className="text-xs text-gray-300 whitespace-pre-wrap">{generatedArticle.content}</p>
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button className="px-3 py-1.5 bg-gold/10 border border-gold/30 rounded text-gold text-xs hover:bg-gold/20">WordPressに保存</button>
+                <button className="px-3 py-1.5 bg-[#12121A] border border-[#2A2A3E] rounded text-gray-400 text-xs">コピー</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
