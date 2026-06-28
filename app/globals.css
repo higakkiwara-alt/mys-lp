@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold: #B8975A;
+  --gold-light: #D4B47A;
+  --cream: #F8F4EE;
+  --beige: #EDE6D8;
+  --dark: #1A1A1A;
+  --mid: #4A4A4A;
+  --muted: #888888;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply text-dark antialiased;
+  }
+}
+
+@layer components {
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-gold text-white font-medium rounded-sm transition-all duration-300 hover:bg-gold-dark active:scale-95;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-gold text-gold font-medium rounded-sm transition-all duration-300 hover:bg-gold hover:text-white active:scale-95;
+  }
+  .card {
+    @apply bg-white rounded-lg border border-gray-100 shadow-sm;
+  }
+  .dashboard-card {
+    @apply bg-[#1E1E2E] border border-[#2A2A3E] rounded-xl p-5;
+  }
+  .stat-badge {
+    @apply inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full;
+  }
+  .stat-badge-up {
+    @apply stat-badge bg-emerald-500/20 text-emerald-400;
+  }
+  .stat-badge-down {
+    @apply stat-badge bg-red-500/20 text-red-400;
+  }
+}
+
+/* Fade animation for landing page */
+.fade {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.fade.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Scrollbar styling for dashboard */
+.dashboard-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.dashboard-scroll::-webkit-scrollbar-track {
+  background: #12121A;
+}
+.dashboard-scroll::-webkit-scrollbar-thumb {
+  background: #2A2A3E;
+  border-radius: 3px;
+}
+.dashboard-scroll::-webkit-scrollbar-thumb:hover {
+  background: #B8975A;
+}
