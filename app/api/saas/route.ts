@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateContent } from "@/lib/claude";
+import { z } from "zod";
 
 const MOCK_CLIENTS = [
   { id: "1", salonName: "Hair Studio Luna", ownerName: "中村 美佳", plan: "standard", mrr: 29800, status: "active", startDate: "2024-01-15", features: ["content-hub", "meo", "seo"] },
@@ -14,16 +15,26 @@ const PLANS = [
   { id: "pro", name: "Pro", price: 49800, features: ["全機能解放", "AIセールスクローザー", "競合分析", "リテンション AI", "専任サポート"] },
 ];
 
+const clientSchema = z.object({
+  salonName: z.string().min(1).max(100),
+  plan: z.enum(["starter", "standard", "pro"]),
+});
+
+const actionSchema = z.object({
+  action: z.enum(["onboard", "proposal"]),
+  client: clientSchema.optional(),
+});
+
 export async function GET() {
-  const totalMrr = MOCK_CLIENTS.filter((c) => c.status === "active").reduce((s, c) => s + c.mrr, 0);
-  const arr = totalMrr * 12;
+  const activeClients = MOCK_CLIENTS.filter((c) => c.status === "active");
+  const totalMrr = activeClients.reduce((s, c) => s + c.mrr, 0);
   const stats = {
     totalClients: MOCK_CLIENTS.length,
-    activeClients: MOCK_CLIENTS.filter((c) => c.status === "active").length,
+    activeClients: activeClients.length,
     trialClients: MOCK_CLIENTS.filter((c) => c.status === "trial").length,
     mrr: totalMrr,
-    arr,
-    avgMrr: Math.round(totalMrr / MOCK_CLIENTS.filter((c) => c.status === "active").length),
+    arr: totalMrr * 12,
+    avgMrr: activeClients.length > 0 ? Math.round(totalMrr / activeClients.length) : 0,
     churnRate: 2.1,
     nps: 71,
   };
@@ -39,24 +50,30 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { action, client } = await req.json();
+  try {
+    const body = await req.json();
+    const { action, client } = actionSchema.parse(body);
 
-  if (action === "onboard" && client) {
-    const welcomeMessage = await generateContent(
-      `SaaSオンボーディングウェルカムメール作成。美容室AI自動化SaaS「Mys AI OS」。
-新規クライアント: ${client.salonName}（${client.plan}プラン）。
-最初の1週間でやるべきセットアップ手順と期待できる成果を含む、300字以内の日本語メール本文。`
-    );
-    return NextResponse.json({ welcomeMessage, client });
+    if (action === "onboard" && client) {
+      const welcomeMessage = await generateContent(
+        `SaaSオンボーディングウェルカムメール作成。美容室AI自動化SaaS「Mys AI OS」。新規クライアント: ${client.salonName}（${client.plan}プラン）。最初の1週間でやるべきセットアップ手順と期待できる成果を含む、300字以内の日本語メール本文。`
+      );
+      return NextResponse.json({ welcomeMessage, client });
+    }
+
+    if (action === "proposal" && client) {
+      const proposal = await generateContent(
+        `美容室SaaS提案書サマリー。対象: ${client.salonName}。現プラン: ${client.plan}。アップグレード提案と想定ROIを含む200字以内のビジネス提案。`
+      );
+      return NextResponse.json({ proposal });
+    }
+
+    return NextResponse.json({ error: "client is required for this action" }, { status: 400 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid input", details: error.issues }, { status: 400 });
+    }
+    console.error("[saas/route]", error instanceof Error ? error.message : "Unknown error");
+    return NextResponse.json({ error: "Failed to process request" }, { status: 500 });
   }
-
-  if (action === "proposal" && client) {
-    const proposal = await generateContent(
-      `美容室SaaS提案書サマリー。対象: ${client.salonName}。現プラン: ${client.plan}。
-アップグレード提案と想定ROIを含む200字以内のビジネス提案。`
-    );
-    return NextResponse.json({ proposal });
-  }
-
-  return NextResponse.json({ error: "Unknown action" }, { status: 400 });
 }

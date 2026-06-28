@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateContent } from "@/lib/claude";
-import { generateBlogOutline } from "@/lib/claude";
+import { generateContent, generateBlogOutline } from "@/lib/claude";
+import { z } from "zod";
+
+const actionSchema = z.object({
+  action: z.enum(["discover", "generate-article"]),
+  seed: z.string().max(50).optional(),
+  keyword: z.string().max(100).optional(),
+});
 
 const SEED_KEYWORDS = [
   "立川 縮毛矯正",
@@ -39,23 +45,36 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { action, keyword, seed } = await req.json();
+  try {
+    const body = await req.json();
+    const { action, keyword, seed } = actionSchema.parse(body);
 
-  if (action === "discover") {
-    const prompt = `美容室「Mys（ミース）」立川・髪質改善専門のロングテールキーワードを${seed ?? "立川 縮毛矯正"}の派生で10個発見。
-JSON配列: [{"keyword": "", "volume": 100-500, "difficulty": 10-40, "intent": "情報|比較|価格|予約|指名"}]`;
-    const raw = await generateContent(prompt);
-    const parsed = JSON.parse(raw.match(/\[[\s\S]*\]/)?.[0] ?? "[]");
-    return NextResponse.json({ keywords: parsed });
+    if (action === "discover") {
+      const safeSeed = (seed ?? "立川 縮毛矯正").slice(0, 50);
+      const prompt = `美容室「Mys（ミース）」立川・髪質改善専門のロングテールキーワードを「${safeSeed}」の派生で10個発見。JSON配列: [{"keyword": "", "volume": 100-500, "difficulty": 10-40, "intent": "情報|比較|価格|予約|指名"}]`;
+      const raw = await generateContent(prompt);
+      const parsed = JSON.parse(raw.match(/\[[\s\S]*\]/)?.[0] ?? "[]");
+      return NextResponse.json({ keywords: parsed });
+    }
+
+    if (action === "generate-article") {
+      if (!keyword) {
+        return NextResponse.json({ error: "keyword is required" }, { status: 400 });
+      }
+      const safeKeyword = keyword.slice(0, 100);
+      const { title, outline } = await generateBlogOutline(safeKeyword);
+      const articleContent = await generateContent(
+        `SEOブログ記事を作成。タイトル: ${title}\nアウトライン: ${JSON.stringify(outline)}\n1500文字以上、自然な日本語。`
+      );
+      return NextResponse.json({ title, outline, content: articleContent, keyword: safeKeyword });
+    }
+
+    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid input", details: error.issues }, { status: 400 });
+    }
+    console.error("[seo/longtail]", error instanceof Error ? error.message : "Unknown error");
+    return NextResponse.json({ error: "Failed to process request" }, { status: 500 });
   }
-
-  if (action === "generate-article" && keyword) {
-    const { title, outline } = await generateBlogOutline(keyword);
-    const articleContent = await generateContent(
-      `SEOブログ記事を作成。タイトル: ${title}\nアウトライン: ${JSON.stringify(outline)}\n1500文字以上、自然な日本語、内部リンク指示あり。`
-    );
-    return NextResponse.json({ title, outline, content: articleContent, keyword });
-  }
-
-  return NextResponse.json({ error: "Unknown action" }, { status: 400 });
 }

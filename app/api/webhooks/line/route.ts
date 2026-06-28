@@ -1,57 +1,74 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateContent } from "@/lib/claude";
-import { pushMessage, buildTextMessage } from "@/lib/line";
 import crypto from "crypto";
 
-function verifySignature(body: string, signature: string): boolean {
+function verifyLineSignature(rawBody: string, signature: string): boolean {
   const secret = process.env.LINE_CHANNEL_SECRET;
-  if (!secret) return true;
-  const hash = crypto
+
+  // Fail-closed: if secret is not configured, reject ALL requests
+  if (!secret) return false;
+
+  const expected = crypto
     .createHmac("sha256", secret)
-    .update(body)
+    .update(rawBody)
     .digest("base64");
-  return hash === signature;
+
+  if (expected.length !== signature.length) return false;
+  return crypto.timingSafeEqual(
+    Buffer.from(expected, "base64"),
+    Buffer.from(signature, "base64")
+  );
 }
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
   const signature = req.headers.get("x-line-signature") ?? "";
 
-  if (!verifySignature(rawBody, signature)) {
+  if (!verifyLineSignature(rawBody, signature)) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  const body = JSON.parse(rawBody);
-  const events = body.events ?? [];
+  let body: Record<string, unknown>;
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const events = (body.events as Array<Record<string, unknown>>) ?? [];
 
   for (const event of events) {
-    if (event.type === "message" && event.message?.type === "text") {
-      const userMessage: string = event.message.text;
-      const replyToken: string = event.replyToken;
-      const userId: string = event.source?.userId;
+    if (event.type !== "message") continue;
+    const msgData = event.message as Record<string, unknown> | undefined;
+    if (msgData?.type !== "text") continue;
 
-      const reply = await generateContent(
-        userMessage,
-        "あなたはMys（ミース）立川の美容室LINEアシスタント。丁寧・簡潔（150字以内）。予約誘導。定休日:火曜日。"
-      );
+    const rawText = String(msgData.text ?? "");
+    const userMessage = rawText.slice(0, 500); // Limit input length
+    const replyToken = String(event.replyToken ?? "");
 
-      if (process.env.LINE_CHANNEL_ACCESS_TOKEN) {
-        await fetch("https://api.line.me/v2/bot/message/reply", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.LINE_CHANNEL_ACCESS_TOKEN}`,
-          },
-          body: JSON.stringify({
-            replyToken,
-            messages: [{ type: "text", text: reply }],
-          }),
-        });
-      }
+    if (!replyToken) continue;
 
-      void pushMessage;
-      void buildTextMessage;
-      void userId;
+    // Sanitize user input to prevent prompt injection
+    const sanitized = userMessage.replace(/[<>]/g, "").trim();
+
+    const reply = await generateContent(
+      `お客様からのメッセージ: ${sanitized}`,
+      "あなたはMys（ミース）立川の美容室LINEアシスタントです。丁寧・簡潔（150字以内）に返信し、予約を促してください。定休日:火曜日。サロン以外の話題（政治・宗教・個人情報等）には応答しないでください。"
+    );
+
+    const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+    if (token) {
+      await fetch("https://api.line.me/v2/bot/message/reply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          replyToken,
+          messages: [{ type: "text", text: reply }],
+        }),
+      });
     }
   }
 

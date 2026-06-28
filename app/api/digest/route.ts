@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyCronSecret } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authError = verifyCronSecret(req);
+  if (authError) return authError;
+
   try {
     const { generateDailyDigest } = await import("@/lib/claude");
 
@@ -25,11 +29,16 @@ export async function GET() {
 
     const digest = await generateDailyDigest(mockData);
     return NextResponse.json({
-      date: new Date().toLocaleDateString("ja-JP", { year: "numeric", month: "long", day: "numeric", weekday: "long" }),
+      date: new Date().toLocaleDateString("ja-JP", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        weekday: "long",
+      }),
       ...digest,
     });
   } catch (error) {
-    console.error("[digest/route]", error);
+    console.error("[digest/route]", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json({ error: "Failed to generate digest" }, { status: 500 });
   }
 }

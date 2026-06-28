@@ -1,58 +1,120 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateContent } from "@/lib/claude";
+import crypto from "crypto";
 
-const VERIFY_TOKEN = process.env.INSTAGRAM_VERIFY_TOKEN ?? "mys_webhook_token";
+// Meta sends X-Hub-Signature-256: sha256=<HMAC-SHA256(body, app_secret)>
+function verifyMetaSignature(rawBody: string, signatureHeader: string): boolean {
+  const appSecret = process.env.META_APP_SECRET;
+  if (!appSecret) {
+    // Fail-closed: if secret is not configured, reject all requests
+    return false;
+  }
 
+  if (!signatureHeader.startsWith("sha256=")) return false;
+
+  const receivedSig = signatureHeader.slice(7);
+  const expectedSig = crypto
+    .createHmac("sha256", appSecret)
+    .update(rawBody)
+    .digest("hex");
+
+  if (receivedSig.length !== expectedSig.length) return false;
+  return crypto.timingSafeEqual(
+    Buffer.from(receivedSig, "hex"),
+    Buffer.from(expectedSig, "hex")
+  );
+}
+
+// Webhook subscription verification (GET)
 export async function GET(req: NextRequest) {
+  const verifyToken = process.env.INSTAGRAM_VERIFY_TOKEN;
+  if (!verifyToken) {
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 503 });
+  }
+
   const { searchParams } = new URL(req.url);
   const mode = searchParams.get("hub.mode");
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    return new NextResponse(challenge, { status: 200 });
+  if (mode !== "subscribe" || !token || !challenge) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
-  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  // Constant-time token comparison to prevent timing attacks
+  const tokenBuf = Buffer.alloc(64, 0);
+  const expectedBuf = Buffer.alloc(64, 0);
+  tokenBuf.write(token);
+  expectedBuf.write(verifyToken);
+
+  if (!crypto.timingSafeEqual(tokenBuf, expectedBuf)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  return new NextResponse(challenge, { status: 200 });
 }
 
+// Webhook event processing (POST)
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const rawBody = await req.text();
+  const signature = req.headers.get("x-hub-signature-256") ?? "";
 
-  if (body.object !== "instagram") {
+  if (!verifyMetaSignature(rawBody, signature)) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  let body: unknown;
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const payload = body as Record<string, unknown>;
+  if (payload.object !== "instagram") {
     return NextResponse.json({ error: "Not instagram" }, { status: 400 });
   }
 
-  const entries = body.entry ?? [];
-  const responses: unknown[] = [];
+  const entries = (payload.entry as Array<Record<string, unknown>>) ?? [];
+  let processed = 0;
 
   for (const entry of entries) {
-    for (const messaging of entry.messaging ?? []) {
-      if (messaging.message?.text) {
-        const userMessage = messaging.message.text;
-        const senderId = messaging.sender?.id;
+    const messaging = (entry.messaging as Array<Record<string, unknown>>) ?? [];
+    for (const msg of messaging) {
+      const msgData = msg.message as Record<string, unknown> | undefined;
+      if (msgData?.text && typeof msgData.text === "string") {
+        const userMessage = msgData.text.slice(0, 500); // Limit input length
+        const senderId = (msg.sender as Record<string, string> | undefined)?.id;
+
+        if (!senderId) continue;
+
+        // Sanitize user input to prevent prompt injection
+        const sanitized = userMessage.replace(/[<>]/g, "").trim();
 
         const reply = await generateContent(
-          userMessage,
-          "あなたはMys（ミース）立川の美容室AIアシスタント。Instagram DMに丁寧かつ簡潔に返信。150字以内。予約は「ホットペッパービューティー」か「LINE」を案内。"
+          `お客様からのメッセージ: ${sanitized}`,
+          "あなたはMys（ミース）立川の美容室AIアシスタントです。Instagram DMに丁寧かつ簡潔に返信してください。150字以内。予約は「ホットペッパービューティー」か「LINE」を案内。サロン以外の話題（政治・宗教・個人情報等）には応答しないでください。"
         );
 
-        if (process.env.INSTAGRAM_ACCESS_TOKEN) {
-          await fetch(
-            `https://graph.facebook.com/v17.0/me/messages?access_token=${process.env.INSTAGRAM_ACCESS_TOKEN}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                recipient: { id: senderId },
-                message: { text: reply },
-              }),
-            }
-          );
+        const accessToken = process.env.INSTAGRAM_ACCESS_TOKEN;
+        if (accessToken) {
+          await fetch(`https://graph.facebook.com/v21.0/me/messages`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              recipient: { id: senderId },
+              message: { text: reply },
+            }),
+          });
         }
-        responses.push({ senderId, reply });
+
+        processed++;
       }
     }
   }
 
-  return NextResponse.json({ status: "ok", processed: responses.length });
+  return NextResponse.json({ status: "ok", processed });
 }

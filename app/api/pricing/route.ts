@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateContent } from "@/lib/claude";
+import { z } from "zod";
 
 const MOCK_SLOTS = [
   { menu: "縮毛矯正", dayLabel: "月曜", hour: 10, fillRate: 0.32, basePrice: 28000, suggestPrice: 24000 },
@@ -19,6 +20,19 @@ const MONTHLY_STATS = [
   { month: "6月", revenue: 2180000, bookings: 213 },
 ];
 
+const actionSchema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("analyze") }),
+  z.object({
+    action: z.literal("campaign"),
+    slot: z.object({
+      dayLabel: z.string().max(20),
+      menu: z.string().max(50),
+      suggestPrice: z.number().int().min(0).max(1000000),
+      basePrice: z.number().int().min(0).max(1000000),
+    }),
+  }),
+]);
+
 export async function GET() {
   return NextResponse.json({
     slots: MOCK_SLOTS,
@@ -33,27 +47,32 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { action } = await req.json();
+  try {
+    const body = await req.json();
+    const parsed = actionSchema.parse(body);
 
-  if (action === "analyze") {
-    const lowSlots = MOCK_SLOTS.filter((s) => s.fillRate < 0.5);
-    const highSlots = MOCK_SLOTS.filter((s) => s.fillRate > 0.9);
-    const prompt = `美容室の価格最適化提案。
-低稼働スロット: ${lowSlots.map((s) => `${s.dayLabel}${s.hour}時 ${s.menu}（充填率${Math.round(s.fillRate * 100)}%）`).join(", ")}
-高需要スロット: ${highSlots.map((s) => `${s.dayLabel}${s.hour}時 ${s.menu}（充填率${Math.round(s.fillRate * 100)}%）`).join(", ")}
-具体的な価格戦略と集客施策を3つ提案してください。`;
-    const analysis = await generateContent(prompt);
-    return NextResponse.json({ analysis, slots: MOCK_SLOTS });
+    if (parsed.action === "analyze") {
+      const lowSlots = MOCK_SLOTS.filter((s) => s.fillRate < 0.5);
+      const highSlots = MOCK_SLOTS.filter((s) => s.fillRate > 0.9);
+      const prompt = `美容室の価格最適化提案。低稼働スロット: ${lowSlots.map((s) => `${s.dayLabel}${s.hour}時 ${s.menu}（充填率${Math.round(s.fillRate * 100)}%）`).join(", ")}。高需要スロット: ${highSlots.map((s) => `${s.dayLabel}${s.hour}時 ${s.menu}（充填率${Math.round(s.fillRate * 100)}%）`).join(", ")}。具体的な価格戦略と集客施策を3つ提案してください。`;
+      const analysis = await generateContent(prompt);
+      return NextResponse.json({ analysis, slots: MOCK_SLOTS });
+    }
+
+    if (parsed.action === "campaign") {
+      const { slot } = parsed;
+      const message = await generateContent(
+        `美容室Mys限定クーポンのLINEメッセージ(150字以内): ${slot.dayLabel}の${slot.menu}が${slot.suggestPrice}円（通常${slot.basePrice}円）。`
+      );
+      return NextResponse.json({ message });
+    }
+
+    return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid input", details: error.issues }, { status: 400 });
+    }
+    console.error("[pricing/route]", error instanceof Error ? error.message : "Unknown error");
+    return NextResponse.json({ error: "Failed to process request" }, { status: 500 });
   }
-
-  if (action === "campaign") {
-    const { slot } = await req.json().catch(() => ({ slot: null }));
-    if (!slot) return NextResponse.json({ error: "slot required" }, { status: 400 });
-    const message = await generateContent(
-      `美容室Mys限定クーポンのLINEメッセージ(150字以内): ${slot.dayLabel}の${slot.menu}が${slot.suggestPrice}円（通常${slot.basePrice}円）。`
-    );
-    return NextResponse.json({ message });
-  }
-
-  return NextResponse.json({ error: "Unknown action" }, { status: 400 });
 }
