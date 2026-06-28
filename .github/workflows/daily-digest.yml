@@ -1,0 +1,34 @@
+name: Daily Digest & Auto Tasks
+
+on:
+  schedule:
+    - cron: "0 21 * * *"  # 毎日 6:00 JST (UTC 21:00)
+  workflow_dispatch:
+
+jobs:
+  daily-digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate CEO Daily Digest
+        run: |
+          curl -s -X GET "${{ vars.APP_URL }}/api/digest" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"
+
+  competitor-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Competitor Data
+        run: |
+          curl -s -X POST "${{ vars.APP_URL }}/api/competitor" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{"keyword": "縮毛矯正 立川", "area": "立川"}'
+
+  seo-rank-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check SEO Rankings
+        run: |
+          curl -s -X GET "${{ vars.APP_URL }}/api/seo/rank" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
