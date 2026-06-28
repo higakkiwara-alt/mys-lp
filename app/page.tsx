@@ -189,6 +189,21 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* AI Salon OS promo for B2B visitors */}
+      <section style={{ background: "#0F0F1A", padding: "48px 24px", textAlign: "center" }}>
+        <p style={{ color: "#B8975A", fontSize: "10px", letterSpacing: "0.3em", textTransform: "uppercase", marginBottom: "16px" }}>For Salon Owners</p>
+        <p style={{ color: "#fff", fontFamily: "var(--font-noto-serif), serif", fontSize: "22px", fontWeight: 300, marginBottom: "12px" }}>
+          この AI システム、あなたのサロンにも導入できます
+        </p>
+        <p style={{ color: "#888", fontSize: "13px", lineHeight: 1.8, marginBottom: "28px", maxWidth: "480px", margin: "0 auto 28px" }}>
+          Mys が自社開発・自社実証した美容室特化 AI。MEO・SNS・リテンション・採用を全自動化。
+        </p>
+        <Link href="/ai-os"
+          style={{ display: "inline-block", padding: "12px 32px", border: "1px solid #B8975A", color: "#B8975A", textDecoration: "none", fontSize: "12px", letterSpacing: "0.15em" }}>
+          AI Salon OS を見る →
+        </Link>
+      </section>
+
       {/* Footer */}
       <footer style={{ background: "#111", padding: "32px 24px", textAlign: "center" }}>
         <p style={{ fontFamily: "var(--font-cormorant), serif", color: "#B8975A", fontSize: "18px", letterSpacing: "0.3em", marginBottom: "12px" }}>M Y S</p>
