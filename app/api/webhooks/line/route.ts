@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateContent } from "@/lib/claude";
+import { buildSafePrompt, sanitizeAiOutput } from "@/lib/ai-security";
+import { isWebhookReplay } from "@/lib/replay-guard";
+import { auditLog } from "@/lib/audit";
 import crypto from "crypto";
+
+function getIp(req: NextRequest): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+}
 
 function verifyLineSignature(rawBody: string, signature: string): boolean {
   const secret = process.env.LINE_CHANNEL_SECRET;
-
-  // Fail-closed: if secret is not configured, reject ALL requests
-  if (!secret) return false;
+  if (!secret) return false; // fail-closed
 
   const expected = crypto
     .createHmac("sha256", secret)
@@ -21,10 +26,12 @@ function verifyLineSignature(rawBody: string, signature: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  const ip = getIp(req);
   const rawBody = await req.text();
   const signature = req.headers.get("x-line-signature") ?? "";
 
   if (!verifyLineSignature(rawBody, signature)) {
+    auditLog("webhook_invalid_sig", ip, "line");
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
@@ -37,24 +44,38 @@ export async function POST(req: NextRequest) {
 
   const events = (body.events as Array<Record<string, unknown>>) ?? [];
 
+  // Extract timestamp from first event (LINE provides ms since epoch)
+  const firstTs = typeof (events[0]?.timestamp) === "number"
+    ? (events[0].timestamp as number)
+    : 0;
+
+  if (isWebhookReplay(signature, firstTs)) {
+    auditLog("webhook_invalid_sig", ip, "line_replay");
+    return NextResponse.json({ error: "Replay detected" }, { status: 400 });
+  }
+
   for (const event of events) {
     if (event.type !== "message") continue;
     const msgData = event.message as Record<string, unknown> | undefined;
     if (msgData?.type !== "text") continue;
 
     const rawText = String(msgData.text ?? "");
-    const userMessage = rawText.slice(0, 500); // Limit input length
     const replyToken = String(event.replyToken ?? "");
-
     if (!replyToken) continue;
 
-    // Sanitize user input to prevent prompt injection
-    const sanitized = userMessage.replace(/[<>]/g, "").trim();
-
-    const reply = await generateContent(
-      `お客様からのメッセージ: ${sanitized}`,
-      "あなたはMys（ミース）立川の美容室LINEアシスタントです。丁寧・簡潔（150字以内）に返信し、予約を促してください。定休日:火曜日。サロン以外の話題（政治・宗教・個人情報等）には応答しないでください。"
+    // Build injection-resistant prompt
+    const prompt = buildSafePrompt(
+      "LINEからお客様のメッセージが届きました。美容室として返信してください。",
+      rawText,
+      "150字以内、丁寧に返信。定休日:火曜日。予約を促してください。"
     );
+
+    const raw = await generateContent(
+      prompt,
+      "あなたはMys（ミース）立川の美容室LINEアシスタントです。サロンに関係しない話題・政治・宗教・個人情報の要求には応答しないでください。"
+    );
+
+    const reply = sanitizeAiOutput(raw).slice(0, 300);
 
     const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
     if (token) {

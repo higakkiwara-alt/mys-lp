@@ -37,23 +37,55 @@ function getIp(req: NextRequest): string {
 }
 
 // ---------------------------------------------------------------------------
+// Allowed origins for CORS (API routes are same-origin only)
+// ---------------------------------------------------------------------------
+function isAllowedOrigin(origin: string | null, host: string): boolean {
+  if (!origin) return true; // no Origin header = server-to-server, allow
+  try {
+    const originHost = new URL(origin).host;
+    return originHost === host;
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Security headers
 // ---------------------------------------------------------------------------
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
   "X-Content-Type-Options": "nosniff",
-  "X-XSS-Protection": "0", // Disabled in favor of CSP
+  "X-XSS-Protection": "0", // Disabled — use CSP instead
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+  "Permissions-Policy":
+    "camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), bluetooth=()",
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Resource-Policy": "same-origin",
+  "Cross-Origin-Embedder-Policy": "require-corp",
 };
 
-const CSP = [
+// In production: remove 'unsafe-eval' (only needed for Next.js dev HMR)
+const CSP_PROD = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js hydration requires these
+  "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
   "connect-src 'self'",
+  "media-src 'self' blob:",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "upgrade-insecure-requests",
+].join("; ");
+
+const CSP_DEV = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // HMR requires unsafe-eval in dev
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' ws: wss:", // WebSocket for HMR
   "media-src 'self' blob:",
   "frame-ancestors 'none'",
   "base-uri 'self'",
@@ -91,20 +123,17 @@ async function verifySessionEdge(token: string): Promise<boolean> {
       new TextEncoder().encode(payload)
     );
 
-    // Convert hex signature to bytes for comparison
     if (sigHex.length !== 64) return false;
     const sigBytes = new Uint8Array(
       sigHex.match(/.{2}/g)!.map((b) => parseInt(b, 16))
     );
     const expectedBytes = new Uint8Array(expected);
 
-    // Constant-time comparison
     if (sigBytes.length !== expectedBytes.length) return false;
     let diff = 0;
     for (let i = 0; i < sigBytes.length; i++) diff |= sigBytes[i] ^ expectedBytes[i];
     if (diff !== 0) return false;
 
-    // Check expiry
     const data = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
     return typeof data.exp === "number" && data.exp > Date.now();
   } catch {
@@ -113,9 +142,9 @@ async function verifySessionEdge(token: string): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
-// Routes that have their own auth (webhooks) or no auth needed (public)
+// Route classification
 // ---------------------------------------------------------------------------
-const PUBLIC_ROUTES = ["/login", "/api/auth/", "/api/webhooks/"];
+const PUBLIC_ROUTES = ["/login", "/api/auth/", "/api/webhooks/", "/.well-known/"];
 const CRON_ROUTES = ["/api/digest", "/api/meo/dominator", "/api/retention"];
 
 function isPublicRoute(pathname: string): boolean {
@@ -152,11 +181,28 @@ export async function middleware(req: NextRequest) {
   }
 
   const ip = getIp(req);
+  const isProd = process.env.NODE_ENV === "production";
+
+  // ----- CORS: reject cross-origin API requests -----
+  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/webhooks/")) {
+    const origin = req.headers.get("origin");
+    const host = req.headers.get("host") ?? "";
+    if (!isAllowedOrigin(origin, host)) {
+      const res = new NextResponse(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+      return addSecurityHeaders(res, false, isProd);
+    }
+  }
 
   // ----- Rate limiting -----
   if (pathname.startsWith("/api/")) {
     const isWebhook = pathname.startsWith("/api/webhooks/");
-    const isAiRoute = /^\/api\/(brain|content|image|competitor|digest|recruit|sales|saas|seo|stylist|training|meo|reviews|pricing|schedule|retention)/.test(pathname);
+    const isAiRoute =
+      /^\/api\/(brain|content|image|competitor|digest|recruit|sales|saas|seo|stylist|training|meo|reviews|pricing|schedule|retention)/.test(
+        pathname
+      );
 
     const bucket = isWebhook ? "wh" : isAiRoute ? "ai" : "api";
     const limit = isWebhook ? 300 : isAiRoute ? 20 : 60;
@@ -166,14 +212,13 @@ export async function middleware(req: NextRequest) {
         JSON.stringify({ error: "Rate limit exceeded. Retry in 60 seconds." }),
         { status: 429, headers: { "Content-Type": "application/json", "Retry-After": "60" } }
       );
-      return addSecurityHeaders(res, false);
+      return addSecurityHeaders(res, false, isProd);
     }
   }
 
-  // ----- Auth: Public routes skip -----
   const isPublic = isPublicRoute(pathname);
 
-  // ----- Auth: Cron routes check -----
+  // ----- Auth: Cron routes -----
   if (isCronRoute(pathname)) {
     const cronSecret = process.env.CRON_SECRET;
     if (cronSecret) {
@@ -183,12 +228,11 @@ export async function middleware(req: NextRequest) {
           status: 403,
           headers: { "Content-Type": "application/json" },
         });
-        return addSecurityHeaders(res, false);
+        return addSecurityHeaders(res, false, isProd);
       }
     }
-    // Cron routes don't need cookie-based session auth
     const res = NextResponse.next();
-    return addSecurityHeaders(res, true);
+    return addSecurityHeaders(res, true, isProd);
   }
 
   // ----- Auth: API routes (non-public, non-cron) -----
@@ -200,12 +244,15 @@ export async function middleware(req: NextRequest) {
         status: 401,
         headers: { "Content-Type": "application/json" },
       });
-      return addSecurityHeaders(res, false);
+      return addSecurityHeaders(res, false, isProd);
     }
   }
 
   // ----- Auth: Dashboard routes -----
-  if ((pathname.startsWith("/dashboard") || pathname.startsWith("/ai-os")) && !isPublic) {
+  if (
+    (pathname.startsWith("/dashboard") || pathname.startsWith("/ai-os")) &&
+    !isPublic
+  ) {
     const token = req.cookies.get("mys_session")?.value ?? "";
     const valid = await verifySessionEdge(token);
     if (!valid) {
@@ -216,13 +263,27 @@ export async function middleware(req: NextRequest) {
   }
 
   const res = NextResponse.next();
-  return addSecurityHeaders(res, true);
+
+  // Attach a unique request ID for distributed tracing / incident correlation
+  const requestId = crypto.randomUUID();
+  res.headers.set("X-Request-ID", requestId);
+
+  return addSecurityHeaders(res, true, isProd);
 }
 
-function addSecurityHeaders(res: NextResponse, addCsp: boolean): NextResponse {
+function addSecurityHeaders(
+  res: NextResponse,
+  addCsp: boolean,
+  isProd: boolean
+): NextResponse {
   Object.entries(SECURITY_HEADERS).forEach(([k, v]) => res.headers.set(k, v));
-  if (addCsp) res.headers.set("Content-Security-Policy", CSP);
-  if (process.env.NODE_ENV === "production") {
+  if (addCsp) {
+    res.headers.set(
+      "Content-Security-Policy",
+      isProd ? CSP_PROD : CSP_DEV
+    );
+  }
+  if (isProd) {
     res.headers.set("Strict-Transport-Security", HSTS);
   }
   return res;

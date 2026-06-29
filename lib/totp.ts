@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { isTotpReplay, markTotpUsed } from "@/lib/replay-guard";
 
 // RFC 6238 TOTP implementation (no external dependencies)
 
@@ -75,11 +76,16 @@ export function verifyTotp(secret: string, token: string): boolean {
   }
 
   const counter = Math.floor(Date.now() / 30_000);
+  const code = token.trim();
 
   // Allow ±1 window (30s drift tolerance)
   for (const drift of [-1, 0, 1]) {
-    const expected = hotp(secretBytes, counter + drift);
-    if (crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(token.trim()))) {
+    const c = counter + drift;
+    const expected = hotp(secretBytes, c);
+    if (crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(code))) {
+      // Replay prevention: reject if this (counter, code) was already used
+      if (isTotpReplay(code, c)) return false;
+      markTotpUsed(code, c);
       return true;
     }
   }

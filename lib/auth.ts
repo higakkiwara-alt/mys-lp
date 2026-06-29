@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { isSessionRevoked } from "@/lib/session-store";
 
 const SESSION_COOKIE = "mys_session";
 const PRE_AUTH_COOKIE = "mys_preauth"; // partial session: password OK, MFA pending
@@ -15,8 +16,11 @@ function signToken(payload: object, ttlMs: number): string {
   const secret = process.env.AUTH_SECRET;
   if (!secret) throw new Error("AUTH_SECRET is not set");
 
+  // jti (JWT ID) enables individual token revocation on logout
+  const jti = crypto.randomBytes(16).toString("hex");
+
   const data = Buffer.from(
-    JSON.stringify({ ...payload, exp: Date.now() + ttlMs })
+    JSON.stringify({ ...payload, jti, exp: Date.now() + ttlMs })
   ).toString("base64url");
 
   const sig = crypto.createHmac("sha256", secret).update(data).digest("hex");
@@ -62,12 +66,29 @@ export function createPreAuthToken(): string {
 
 export function validateSessionToken(token: string): boolean {
   const payload = verifyToken(token);
-  return payload?.role === "admin";
+  if (payload?.role !== "admin") return false;
+  // Check revocation list (defense-in-depth for immediate logout)
+  const jti = payload.jti as string | undefined;
+  if (jti && isSessionRevoked(jti)) return false;
+  return true;
 }
 
 export function validatePreAuthToken(token: string): boolean {
   const payload = verifyToken(token);
   return payload?.role === "pre-auth";
+}
+
+/** Extract JTI from a token without full verification (for revocation on logout). */
+export function extractJti(token: string): string | null {
+  try {
+    const dotIndex = token.lastIndexOf(".");
+    if (dotIndex === -1) return null;
+    const data = token.slice(0, dotIndex);
+    const payload = JSON.parse(Buffer.from(data, "base64url").toString()) as Record<string, unknown>;
+    return typeof payload.jti === "string" ? payload.jti : null;
+  } catch {
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -149,6 +170,11 @@ export function requirePreAuth(req: NextRequest): NextResponse | null {
     return NextResponse.json({ error: "MFA session expired" }, { status: 401 });
   }
   return null;
+}
+
+/** Read the raw session token from a request (needed for revocation on logout). */
+export function getSessionToken(req: NextRequest): string {
+  return req.cookies.get(SESSION_COOKIE)?.value ?? "";
 }
 
 // ---------------------------------------------------------------------------
