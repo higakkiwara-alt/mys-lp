@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { TrendingUp, TrendingDown, Minus, RefreshCw, Loader2, AlertTriangle, Eye } from "lucide-react";
+
+const CompetitorRadar = dynamic(() => import("@/components/charts/KpiChart").then(m => m.CompetitorRadar), { ssr: false });
 
 const COMPETITORS = [
   {
@@ -97,6 +100,13 @@ export default function CompetitorPage() {
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           今すぐ取得
         </button>
+      </div>
+
+      {/* Radar Chart */}
+      <div className="dashboard-card mb-6">
+        <p className="text-xs text-gold tracking-widest uppercase mb-1">競合比較レーダー</p>
+        <p className="text-xs text-gray-500 mb-4">6項目スコア比較（100点満点）</p>
+        <CompetitorRadar />
       </div>
 
       {/* Insights */}

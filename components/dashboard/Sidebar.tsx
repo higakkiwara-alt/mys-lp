@@ -4,11 +4,12 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Share2, MapPin, FileText, TrendingUp,
   Image, Brain, Settings, ChevronRight, Zap, Users,
-  Heart, Star, DollarSign, Bot, Target, Building2, BookOpen, Mic, X
+  Heart, Star, DollarSign, Bot, Target, Building2, BookOpen, Mic, X, Smartphone
 } from "lucide-react";
 
 const OPERATIONS_NAV = [
   { href: "/dashboard", icon: LayoutDashboard, label: "CEO Digest", desc: "毎朝のレポート" },
+  { href: "/dashboard/quick", icon: Smartphone, label: "クイックアクション", desc: "スタッフ向け操作" },
   { href: "/dashboard/content-hub", icon: Share2, label: "Content Hub", desc: "全媒体へ自動展開" },
   { href: "/dashboard/meo", icon: MapPin, label: "MEO 管理", desc: "Google Business" },
   { href: "/dashboard/meo/dominator", icon: Target, label: "MEO Dominator", desc: "ランク征服・自動実行" },
@@ -97,8 +98,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           <Settings size={14} />
           <span className="text-xs">設定・API キー</span>
         </Link>
+        <Link href="/ai-os" onClick={onClose} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
+          <span className="text-[10px] text-gray-600">AI Salon OS 紹介ページ</span>
+        </Link>
         <Link href="/" onClick={onClose} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
-          <span className="text-[10px] text-gray-600">← LP に戻る</span>
+          <span className="text-[10px] text-gray-600">← サロンサイトへ</span>
         </Link>
       </div>
     </aside>
