@@ -4,11 +4,12 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Share2, MapPin, FileText, TrendingUp,
   Image, Brain, Settings, ChevronRight, Zap, Users,
-  Heart, Star, DollarSign, Bot, Target, Building2, BookOpen, Mic, X
+  Heart, Star, DollarSign, Bot, Target, Building2, BookOpen, Mic, X, Smartphone
 } from "lucide-react";
 
 const OPERATIONS_NAV = [
   { href: "/dashboard", icon: LayoutDashboard, label: "CEO Digest", desc: "毎朝のレポート" },
+  { href: "/dashboard/quick", icon: Smartphone, label: "クイックアクション", desc: "スタッフ向け操作" },
   { href: "/dashboard/content-hub", icon: Share2, label: "Content Hub", desc: "全媒体へ自動展開" },
   { href: "/dashboard/meo", icon: MapPin, label: "MEO 管理", desc: "Google Business" },
   { href: "/dashboard/meo/dominator", icon: Target, label: "MEO Dominator", desc: "ランク征服・自動実行" },

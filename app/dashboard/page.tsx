@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import {
   TrendingUp, TrendingDown, Star, RefreshCw,
   ArrowUpRight, CheckCircle2, AlertCircle, Zap, Calendar,
-  Users, MapPin, BarChart2, Instagram, MessageSquare
+  Users, MapPin, BarChart2, Instagram, MessageSquare, Printer
 } from "lucide-react";
 
 const RevenueChart = dynamic(() => import("@/components/charts/KpiChart").then(m => m.RevenueChart), { ssr: false });
@@ -101,14 +101,23 @@ export default function DigestPage() {
           <h1 className="text-2xl font-semibold text-white">2026年6月28日（日）</h1>
           <p className="text-sm text-gray-500 mt-1">毎朝6:00 に GitHub Actions が自動生成 · 最終更新: 06:00</p>
         </div>
-        <button
-          onClick={handleGenerate}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/30 rounded-lg text-gold text-sm hover:bg-gold/20 transition-all disabled:opacity-50"
-        >
-          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-          {loading ? "生成中..." : "今すぐ再生成"}
-        </button>
+        <div className="flex items-center gap-2 no-print">
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-[#2A2A3E] rounded-lg text-gray-400 text-sm hover:text-white hover:border-gold/30 transition-all"
+          >
+            <Printer size={14} />
+            PDF 保存
+          </button>
+          <button
+            onClick={handleGenerate}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-gold/10 border border-gold/30 rounded-lg text-gold text-sm hover:bg-gold/20 transition-all disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            {loading ? "生成中..." : "今すぐ再生成"}
+          </button>
+        </div>
       </div>
 
       {/* Alert */}

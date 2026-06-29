@@ -22,10 +22,13 @@ const BEST_TIMES = [
   { day: "土", hour: "10:00", score: 91 },
 ];
 
-const MOCK_SCHEDULED = [
-  { id: "1", content: "縮毛矯正ビフォーアフター✨", platform: "google", scheduledAt: "2026-06-29 08:00", status: "pending" },
-  { id: "2", content: "夏のサラサラヘアキャンペーン🌊", platform: "line", scheduledAt: "2026-06-29 12:00", status: "pending" },
-  { id: "3", content: "【ブログ更新】縮毛矯正の選び方", platform: "wordpress", scheduledAt: "2026-06-30 10:00", status: "pending" },
+type ScheduledPost = { id: string; content: string; platform: string; scheduledAt: string; status: "pending" | "approved" | "rejected" | "posted" };
+
+const INITIAL_SCHEDULED: ScheduledPost[] = [
+  { id: "1", content: "縮毛矯正ビフォーアフター✨ダメージゼロでサラサラに！", platform: "google", scheduledAt: "2026-06-29 08:00", status: "pending" },
+  { id: "2", content: "夏のサラサラヘアキャンペーン🌊期間限定20%OFF", platform: "line", scheduledAt: "2026-06-29 12:00", status: "approved" },
+  { id: "3", content: "【ブログ更新】縮毛矯正の選び方〜失敗しないための5つのポイント〜", platform: "wordpress", scheduledAt: "2026-06-30 10:00", status: "pending" },
+  { id: "4", content: "スタッフ紹介：田中スタイリストの得意スタイルとは", platform: "instagram", scheduledAt: "2026-07-01 19:00", status: "rejected" },
 ];
 
 type PlatformContent = {
@@ -44,6 +47,11 @@ export default function ContentHubPage() {
   const [activeTab, setActiveTab] = useState<"compose" | "schedule" | "analytics">("compose");
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("08:00");
+  const [scheduled, setScheduled] = useState<ScheduledPost[]>(INITIAL_SCHEDULED);
+
+  const updateStatus = (id: string, status: ScheduledPost["status"]) => {
+    setScheduled((prev) => prev.map((p) => p.id === id ? { ...p, status } : p));
+  };
 
   const handleGenerate = async () => {
     if (!instagramPost.trim()) return;
@@ -94,7 +102,7 @@ export default function ContentHubPage() {
               activeTab === tab ? "bg-gold/20 text-gold border border-gold/30" : "bg-[#1E1E2E] text-gray-400 border border-[#2A2A3E]"
             }`}
           >
-            {tab === "compose" ? "コンテンツ作成" : tab === "schedule" ? `スケジュール (${MOCK_SCHEDULED.length})` : "分析"}
+            {tab === "compose" ? "コンテンツ作成" : tab === "schedule" ? `スケジュール (${scheduled.length})` : "分析"}
           </button>
         ))}
       </div>
@@ -267,24 +275,51 @@ export default function ContentHubPage() {
               </button>
             </div>
             <div className="space-y-3">
-              {MOCK_SCHEDULED.map((post) => {
+              {scheduled.map((post) => {
                 const p = PLATFORMS.find((pl) => pl.id === post.platform);
+                const statusConfig = {
+                  pending: { label: "承認待ち", cls: "text-yellow-400 bg-yellow-500/10" },
+                  approved: { label: "承認済み", cls: "text-emerald-400 bg-emerald-500/10" },
+                  rejected: { label: "却下", cls: "text-red-400 bg-red-500/10" },
+                  posted: { label: "投稿済み", cls: "text-blue-400 bg-blue-500/10" },
+                }[post.status];
                 return (
-                  <div key={post.id} className="flex items-center gap-4 p-3 bg-[#12121A] rounded-lg">
-                    <div className="w-8 h-8 rounded flex items-center justify-center text-xs font-bold"
+                  <div key={post.id} className="flex items-start gap-4 p-3 bg-[#12121A] rounded-lg">
+                    <div className="w-8 h-8 rounded flex items-center justify-center text-xs font-bold shrink-0"
                       style={{ background: (p?.color ?? "#888") + "22", color: p?.color }}>
-                      {p?.icon}
+                      {p?.icon ?? "?"}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white truncate">{post.content}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{p?.label}</p>
+                      <p className="text-sm text-white">{post.content}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{p?.label ?? post.platform} · {post.scheduledAt}</p>
+                      {post.status === "pending" && (
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => updateStatus(post.id, "approved")}
+                            className="px-3 py-1 text-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-lg hover:bg-emerald-500/20"
+                          >
+                            ✓ 承認
+                          </button>
+                          <button
+                            onClick={() => updateStatus(post.id, "rejected")}
+                            className="px-3 py-1 text-xs bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/20"
+                          >
+                            ✕ 却下
+                          </button>
+                        </div>
+                      )}
+                      {post.status === "approved" && (
+                        <button
+                          onClick={() => updateStatus(post.id, "posted")}
+                          className="mt-2 px-3 py-1 text-xs bg-gold/10 border border-gold/30 text-gold rounded-lg hover:bg-gold/20"
+                        >
+                          <Send size={10} className="inline mr-1" />今すぐ投稿
+                        </button>
+                      )}
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs text-gray-300">{post.scheduledAt}</p>
-                      <span className="text-[10px] text-yellow-400 bg-yellow-500/10 px-1.5 py-0.5 rounded mt-1 inline-block">
-                        <Clock size={8} className="inline mr-0.5" />予約済
-                      </span>
-                    </div>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded shrink-0 ${statusConfig.cls}`}>
+                      {statusConfig.label}
+                    </span>
                   </div>
                 );
               })}

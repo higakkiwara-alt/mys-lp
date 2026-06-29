@@ -2,7 +2,8 @@
 import {
   LineChart, Line, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, BarChart, Bar, Legend
+  ResponsiveContainer, BarChart, Bar, Legend,
+  RadarChart, PolarGrid, PolarAngleAxis, Radar
 } from "recharts";
 
 const MONTHLY_DATA = [
@@ -91,6 +92,32 @@ export function RankChart() {
         <Line type="monotone" dataKey="髪質改善立川" stroke="#4A90D9" strokeWidth={2}
           dot={{ fill: "#4A90D9", r: 3 }} strokeDasharray="4 2" />
       </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+const RADAR_DATA = [
+  { metric: "口コミ数", Mys: 87, OCEAN: 142, FORTE: 64 },
+  { metric: "評価点", Mys: 94, OCEAN: 78, FORTE: 82 },
+  { metric: "MEO順位", Mys: 80, OCEAN: 90, FORTE: 60 },
+  { metric: "SNS投稿", Mys: 72, OCEAN: 88, FORTE: 55 },
+  { metric: "メニュー数", Mys: 70, OCEAN: 85, FORTE: 75 },
+  { metric: "写真枚数", Mys: 65, OCEAN: 95, FORTE: 70 },
+];
+
+export function CompetitorRadar() {
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <RadarChart data={RADAR_DATA} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
+        <PolarGrid stroke="#2A2A3E" />
+        <PolarAngleAxis dataKey="metric" tick={{ fill: "#888", fontSize: 11 }} />
+        <Radar name="Mys" dataKey="Mys" stroke="#B8975A" fill="#B8975A" fillOpacity={0.25} strokeWidth={2} />
+        <Radar name="OCEAN TOKYO" dataKey="OCEAN" stroke="#4A90D9" fill="#4A90D9" fillOpacity={0.15} strokeWidth={1.5} strokeDasharray="4 2" />
+        <Radar name="FORTE" dataKey="FORTE" stroke="#E879A0" fill="#E879A0" fillOpacity={0.1} strokeWidth={1.5} strokeDasharray="4 2" />
+        <Legend wrapperStyle={{ fontSize: "11px", color: "#888" }} />
+        <Tooltip contentStyle={{ background: "#1E1E2E", border: "1px solid #2A2A3E", borderRadius: "8px", fontSize: "12px" }}
+          formatter={(v: number) => [`${v}点`]} />
+      </RadarChart>
     </ResponsiveContainer>
   );
 }

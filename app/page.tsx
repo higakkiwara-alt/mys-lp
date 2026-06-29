@@ -168,6 +168,39 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Reviews */}
+      <section ref={addFadeRef} className="fade" style={{ background: "#F8F4EE", padding: "80px 24px" }}>
+        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+          <p style={{ color: "#B8975A", fontSize: "10px", letterSpacing: "0.4em", textAlign: "center", marginBottom: "8px" }}>GOOGLE REVIEWS</p>
+          <h2 style={{ fontFamily: "var(--font-noto-serif), serif", fontSize: "clamp(20px,4vw,28px)", fontWeight: 300, textAlign: "center", marginBottom: "48px", color: "#1A1A1A" }}>
+            お客様の声
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px" }}>
+            {[
+              { name: "R.K", stars: 5, text: "縮毛矯正がびっくりするほどダメージを感じない！こんなにサラサラになるとは思っていませんでした。毎朝のスタイリングが楽になりました。" },
+              { name: "M.T", stars: 5, text: "カウンセリングがとても丁寧で、自分の髪質に合った施術を提案してくれました。仕上がりが自然でとても気に入っています。" },
+              { name: "A.S", stars: 5, text: "初めて訪問しましたが雰囲気も良くスタッフさんも親切。髪質改善トリートメントを試して、潤いと艶が全然違います。また来ます！" },
+            ].map((r) => (
+              <div key={r.name} style={{ background: "#fff", border: "1px solid #EDE6D8", borderRadius: "12px", padding: "24px" }}>
+                <div style={{ display: "flex", gap: "2px", marginBottom: "12px" }}>
+                  {Array.from({ length: r.stars }).map((_, i) => (
+                    <span key={i} style={{ color: "#F4B400", fontSize: "14px" }}>★</span>
+                  ))}
+                </div>
+                <p style={{ fontSize: "13px", color: "#555", lineHeight: "1.8", marginBottom: "16px" }}>{r.text}</p>
+                <p style={{ fontSize: "11px", color: "#999" }}>{r.name} · Google 口コミ</p>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: "center", marginTop: "32px" }}>
+            <a href="https://g.page/r/mys-tachikawa/review" target="_blank" rel="noopener noreferrer"
+              style={{ display: "inline-block", padding: "10px 28px", border: "1px solid #B8975A", color: "#B8975A", textDecoration: "none", fontSize: "12px", letterSpacing: "0.15em", borderRadius: "4px" }}>
+              Googleで口コミを書く →
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section style={{ background: "#1A1A1A", padding: "88px 24px", textAlign: "center" }}>
         <p style={{ color: "#D4B47A", fontSize: "11px", letterSpacing: "0.4em", marginBottom: "24px" }}>RESERVATION</p>
