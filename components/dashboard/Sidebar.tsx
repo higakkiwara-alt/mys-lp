@@ -1,10 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboard, Share2, MapPin, FileText, TrendingUp,
   Image, Brain, Settings, ChevronRight, Zap, Users,
-  Heart, Star, DollarSign, Bot, Target, Building2, BookOpen, Mic, X, Smartphone
+  Heart, Star, DollarSign, Bot, Target, Building2, BookOpen, Mic, X, Smartphone, LogOut,
+  Calendar, CheckSquare, Hash, CreditCard, CalendarDays, UserCheck
 } from "lucide-react";
 
 const OPERATIONS_NAV = [
@@ -18,6 +20,16 @@ const OPERATIONS_NAV = [
   { href: "/dashboard/competitor/steal", icon: Target, label: "競合奪取マシン", desc: "低評価から広告生成" },
   { href: "/dashboard/image-studio", icon: Image, label: "画像スタジオ", desc: "Before/After自動化" },
   { href: "/dashboard/brain", icon: Brain, label: "Company Brain", desc: "会社の知識DB" },
+];
+
+const SALON_NAV = [
+  { href: "/dashboard/customers", icon: UserCheck, label: "顧客CRM", desc: "来店・LTV・リスク管理" },
+  { href: "/dashboard/calendar", icon: Calendar, label: "予約カレンダー", desc: "スタッフ別・メニュー別" },
+  { href: "/dashboard/content-calendar", icon: CalendarDays, label: "コンテンツカレンダー", desc: "SNS・ブログ・LINE" },
+  { href: "/dashboard/staff", icon: Users, label: "スタッフ管理", desc: "KPI・シフト・実績" },
+  { href: "/dashboard/tasks", icon: CheckSquare, label: "タスク管理", desc: "Kanbanボード" },
+  { href: "/dashboard/hashtags", icon: Hash, label: "ハッシュタグ分析", desc: "Instagram最適化" },
+  { href: "/dashboard/stripe-pricing", icon: CreditCard, label: "料金プラン", desc: "プラン変更・請求" },
 ];
 
 const GROWTH_NAV = [
@@ -38,6 +50,13 @@ type SidebarProps = {
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("mys-auth");
+    router.push("/login");
+    onClose?.();
+  };
 
   const NavLink = ({ href, icon: Icon, label, desc }: { href: string; icon: React.ElementType; label: string; desc: string }) => {
     const active = pathname === href;
@@ -87,6 +106,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <p className="px-5 py-1.5 text-[9px] text-gray-600 tracking-widest uppercase font-medium">Operations</p>
         {OPERATIONS_NAV.map((item) => <NavLink key={item.href} {...item} />)}
 
+        <p className="px-5 py-1.5 mt-2 text-[9px] text-gray-600 tracking-widest uppercase font-medium border-t border-[#1E1E2E] pt-3">Salon</p>
+        {SALON_NAV.map((item) => <NavLink key={item.href} {...item} />)}
+
         <p className="px-5 py-1.5 mt-2 text-[9px] text-gray-600 tracking-widest uppercase font-medium border-t border-[#1E1E2E] pt-3">Growth</p>
         {GROWTH_NAV.map((item) => <NavLink key={item.href} {...item} />)}
       </nav>
@@ -104,6 +126,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <Link href="/" onClick={onClose} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
           <span className="text-[10px] text-gray-600">← サロンサイトへ</span>
         </Link>
+        <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-500/10 transition-colors text-left">
+          <LogOut size={13} className="text-gray-600" />
+          <span className="text-[10px] text-gray-600">ログアウト</span>
+        </button>
       </div>
     </aside>
   );
