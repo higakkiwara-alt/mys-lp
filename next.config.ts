@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+// next.config.ts sets headers as a fallback for non-middleware paths.
+// Middleware takes precedence for all matched routes.
 const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
   { key: "X-Frame-Options", value: "DENY" },
@@ -7,13 +9,13 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+    value: "camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(), usb=(), bluetooth=()",
   },
   {
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' data: https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",
@@ -22,11 +24,13 @@ const securityHeaders = [
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
+      "upgrade-insecure-requests",
     ].join("; "),
   },
 ];
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   headers: async () => [
     {
       source: "/(.*)",
@@ -38,14 +42,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
       { protocol: "https", hostname: "*.supabase.co" },
-      // DALL-E generated images (oaidalleapiprodscus.blob.core.windows.net)
       { protocol: "https", hostname: "oaidalleapiprodscus.blob.core.windows.net" },
     ],
   },
-  // Prevent server-side environment variables from being exposed to the client
-  serverRuntimeConfig: {},
-  // Only NEXT_PUBLIC_ vars should be exposed to the client
-  publicRuntimeConfig: {},
 };
 
 export default nextConfig;

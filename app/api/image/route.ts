@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { requireAuthFromRequest } from "@/lib/auth";
+import { sanitizeUserInput } from "@/lib/ai-security";
 
 // SSRF protection: only allow specific trusted hostnames for image URLs
 const ALLOWED_IMAGE_HOSTS = new Set([
@@ -27,6 +29,9 @@ const generateSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const authErr = requireAuthFromRequest(req);
+  if (authErr) return authErr;
+
   try {
     const body = await req.json();
     const { prompt, type, imageUrl, size } = generateSchema.parse(body);
@@ -55,8 +60,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ type: "background", imageUrl: processed });
     }
 
-    // Sanitize prompt to prevent injection into image generation
-    const sanitizedPrompt = prompt.replace(/[<>]/g, "").trim();
+    const sanitizedPrompt = sanitizeUserInput(prompt, 500);
     const salonPrompt = `高品質な日本の美容室「Mys（ミース）」のプロフェッショナルな画像。${sanitizedPrompt} スタイル: 清潔感があり高級感のある美容室、ゴールドとクリームの配色、プロフェッショナルな撮影品質。テキストなし、ロゴなし。写真リアリスティックスタイル。`;
 
     const url = await generateImage(salonPrompt, size);

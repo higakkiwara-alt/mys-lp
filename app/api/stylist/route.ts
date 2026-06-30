@@ -1,7 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractStylistInsights, generateStylistContent } from "@/lib/voice";
+import { z } from "zod";
+import { requireAuthFromRequest } from "@/lib/auth";
 
-export async function GET() {
+const insightsSchema = z.object({
+  techniques: z.array(z.string().max(100)).max(20).optional().default([]),
+  customerNeeds: z.array(z.string().max(100)).max(20).optional().default([]),
+  products: z.array(z.string().max(100)).max(20).optional().default([]),
+  followUpActions: z.array(z.string().max(200)).max(20).optional().default([]),
+  summary: z.string().max(500).optional().default(""),
+});
+
+const postSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("analyze"),
+    transcript: z.string().min(1).max(2000),
+  }),
+  z.object({
+    action: z.literal("generate-content"),
+    insights: insightsSchema,
+  }),
+]);
+
+export async function GET(req: NextRequest) {
+  const authErr = requireAuthFromRequest(req);
+  if (authErr) return authErr;
+
   const memos = [
     {
       id: "1",
@@ -36,18 +59,29 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { action, transcript, insights } = body;
+  const authErr = requireAuthFromRequest(req);
+  if (authErr) return authErr;
 
-  if (action === "analyze" && transcript) {
-    const result = await extractStylistInsights(transcript);
-    return NextResponse.json({ insights: result });
+  try {
+    const body = await req.json();
+    const parsed = postSchema.parse(body);
+
+    if (parsed.action === "analyze") {
+      const { extractStylistInsights } = await import("@/lib/voice");
+      const result = await extractStylistInsights(parsed.transcript);
+      return NextResponse.json({ insights: result });
+    }
+
+    if (parsed.action === "generate-content") {
+      const { generateStylistContent } = await import("@/lib/voice");
+      const content = await generateStylistContent(parsed.insights);
+      return NextResponse.json({ content });
+    }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+    console.error("[stylist/route]", error);
+    return NextResponse.json({ error: "Failed to process request" }, { status: 500 });
   }
-
-  if (action === "generate-content" && insights) {
-    const content = await generateStylistContent(insights);
-    return NextResponse.json({ content });
-  }
-
-  return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
 }

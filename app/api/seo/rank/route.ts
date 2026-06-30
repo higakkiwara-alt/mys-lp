@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyCronSecret } from "@/lib/auth";
 
 const MOCK_RANKS = [
   { keyword: "縮毛矯正 立川", rank: 3, prev: 4, volume: 1200 },
@@ -10,12 +11,8 @@ const MOCK_RANKS = [
 ];
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const cronErr = verifyCronSecret(req);
+  if (cronErr) return cronErr;
 
   const { generateContent } = await import("@/lib/claude").catch(() => ({ generateContent: null }));
 
