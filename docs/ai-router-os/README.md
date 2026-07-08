@@ -1,12 +1,11 @@
 # AI Router OS — 設計ドキュメント(Phase 0: 設計)
 
-> **ステータス: 🟢 Day1 承認済み → Day7 実装完了・レビュー待ち(2026-07-08)**
+> **ステータス: 🟢 Day7 承認済み → Day30 実装完了・レビュー待ち(2026-07-08)**
 >
 > 承認記録: [11-approved-decisions.md](./11-approved-decisions.md) /
-> Day1 実装: [12-day1-implementation.md](./12-day1-implementation.md) /
-> Day7 実装: [13-day7-implementation.md](./13-day7-implementation.md)
-> 各ドキュメント末尾の「レビュー観点」への回答は 11 に集約(11 が優先)。
-> Day30 着手は Day7 レビュー承認後。
+> 実装: Day1 [12](./12-day1-implementation.md) / Day7 [13](./13-day7-implementation.md) / Day30 [14](./14-day30-implementation.md)
+> **絶対ルール(オーナー指定): 承認前に外部への投稿・送信・公開を実行しない。**
+> Day90 着手は Day30 レビュー承認後。
 
 ## 目的(最重要事項)
 
@@ -40,6 +39,7 @@
 | 11 | [11-approved-decisions.md](./11-approved-decisions.md) | 設計承認記録(2026-07-08)・AI COO要件 | — |
 | 12 | [12-day1-implementation.md](./12-day1-implementation.md) | Day1 実装ドキュメント・改善提案 | — |
 | 13 | [13-day7-implementation.md](./13-day7-implementation.md) | Day7 実装(非同期・承認キュー・AI COO・SNS) | — |
+| 14 | [14-day30-implementation.md](./14-day30-implementation.md) | Day30 実装(Dashboard・ジョブキュー・プロンプト30本・音声WF・CEO Principles) | — |
 
 ## レビューの進め方
 

@@ -120,6 +120,11 @@ async function getSha(cfg: NonNullable<ReturnType<typeof config>>, path: string)
   return data.sha ?? null;
 }
 
+/** Vault へのファイル書き込み（シードスクリプト・save ステップで使用） */
+export async function putVaultFile(path: string, content: string, message: string): Promise<boolean> {
+  return putFile(path, content, message);
+}
+
 async function putFile(path: string, content: string, message: string): Promise<boolean> {
   const cfg = config();
   if (!cfg) return false;

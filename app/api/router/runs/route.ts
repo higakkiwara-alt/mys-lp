@@ -18,6 +18,7 @@ export async function GET(req: Request) {
       take: limit,
       select: {
         id: true, input: true, source: true, status: true, resultSummary: true,
+        title: true, plan: true, currentStep: true,
         costUsd: true, estimatedUsd: true, durationMs: true, obsidianPath: true,
         error: true, createdAt: true, classification: true,
       },

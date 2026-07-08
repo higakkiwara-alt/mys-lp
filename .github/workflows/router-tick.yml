@@ -1,0 +1,16 @@
+name: AI Router Job Queue Tick
+
+on:
+  schedule:
+    - cron: "*/5 * * * *" # 5分毎（中断ジョブの再開・クラッシュ復旧）
+  workflow_dispatch:
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Process router job queue
+        run: |
+          curl -s -X POST "${{ vars.APP_URL }}/api/router/tick" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"

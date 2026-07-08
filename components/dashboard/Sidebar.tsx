@@ -11,6 +11,7 @@ import {
 
 const OPERATIONS_NAV = [
   { href: "/dashboard", icon: LayoutDashboard, label: "CEO Digest", desc: "毎朝のレポート" },
+  { href: "/dashboard/router", icon: Bot, label: "AI Router (COO)", desc: "承認キュー・実行ログ" },
   { href: "/dashboard/quick", icon: Smartphone, label: "クイックアクション", desc: "スタッフ向け操作" },
   { href: "/dashboard/content-hub", icon: Share2, label: "Content Hub", desc: "全媒体へ自動展開" },
   { href: "/dashboard/meo", icon: MapPin, label: "MEO 管理", desc: "Google Business" },

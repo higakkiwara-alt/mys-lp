@@ -9,6 +9,7 @@ import type { Plan, PlanStep } from "./plan";
 import { stepLabel } from "./plan";
 import { searchVaultContext, saveNoteToVault, isVaultConfigured } from "@/lib/obsidian/vault";
 import { sendReport } from "./notify";
+import { PROMPT_LIBRARY } from "@/prompts/library";
 
 // AI COO Orchestrator（Day7）
 // 依頼→分類→Agent選定→実行順序決定（plan.ts）→実行→レビュー(QA)→再実行判断→Obsidian保存→LINE報告
@@ -17,6 +18,10 @@ import { sendReport } from "./notify";
 
 const MAX_STEP_RETRIES = 2;
 
+// Vercel の実行時間制限(300s)内に収める実行予算。超過時は status="queued" に戻して
+// 次の tick(/api/router/tick)が currentStep から再開する = DBベースのジョブキュー
+const DEFAULT_BUDGET_MS = 240_000;
+
 type Ctx = Record<string, string>; // stepName → output
 
 function buildStepPrompt(
@@ -24,7 +29,8 @@ function buildStepPrompt(
   input: string,
   ctx: Ctx,
   vaultBlock: string,
-  feedback: string | null
+  feedback: string | null,
+  promptBlock = ""
 ): string {
   const prior = Object.entries(ctx)
     .map(([name, out]) => `【${stepLabel(name)}の結果】\n${out.slice(0, 6000)}`)
@@ -32,6 +38,7 @@ function buildStepPrompt(
   return [
     `依頼: ${input}`,
     step.instruction ? `【このステップの任務】${step.instruction}` : null,
+    promptBlock || null,
     prior || null,
     feedback ? `【オーナー/QAからの修正指示 — 必ず反映すること】\n${feedback}` : null,
     vaultBlock || null,
@@ -106,10 +113,15 @@ async function publishViaWebhook(runId: string, c: Classification, ctx: Ctx): Pr
 }
 
 /**
- * パイプライン実行（新規開始・承認後再開の両方で呼ぶ）
- * run.currentStep から plan.steps を順に実行する
+ * パイプライン実行（新規開始・承認後再開・tick再開のすべてで呼ぶ）
+ * run.currentStep から plan.steps を順に実行する。
+ * budgetMs を超えたら queued に戻して中断し、次の tick が続きを実行する。
  */
-export async function runPipeline(runId: string): Promise<void> {
+export async function runPipeline(
+  runId: string,
+  opts: { budgetMs?: number } = {}
+): Promise<void> {
+  const budgetMs = opts.budgetMs ?? DEFAULT_BUDGET_MS;
   const run = await prisma.routerRun.findUnique({ where: { id: runId } });
   if (!run || !run.plan || !run.classification) return;
   if (run.status === "done" || run.status === "rejected") return;
@@ -128,6 +140,11 @@ export async function runPipeline(runId: string): Promise<void> {
       [c.domain, ...c.tags, c.title].join(" "),
       policy.pinnedNotes
     );
+    const libPrompt = plan.promptId ? PROMPT_LIBRARY.find((p) => p.id === plan.promptId) : null;
+    const promptBlock = libPrompt
+      ? `【プロンプトライブラリ「${libPrompt.title}」— この様式・原則に従うこと】\n${libPrompt.body}`
+      : "";
+
     const vaultBlock = vault.notes.length
       ? `【Company OS（Obsidian）の関連ノート — 判断の前提として必ず考慮】\n${vault.notes
           .map((n) => `--- ${n.path} ---\n${n.excerpt}`)
@@ -148,6 +165,15 @@ export async function runPipeline(runId: string): Promise<void> {
 
     for (let i = run.currentStep; i < plan.steps.length; i++) {
       const step = plan.steps[i];
+
+      // 実行予算超過 → queued に戻して中断（tick が再開）
+      if (Date.now() - startedAt > budgetMs) {
+        await prisma.routerRun.update({
+          where: { id: runId },
+          data: { status: "queued", currentStep: i },
+        });
+        return;
+      }
 
       if (step.kind === "approval") {
         if (!run.approvedAt) {
@@ -219,7 +245,7 @@ export async function runPipeline(runId: string): Promise<void> {
               agent: genStep.agent,
               model: genStep.model ?? MODELS.SONNET,
               useWebSearch: genStep.useWebSearch,
-              prompt: buildStepPrompt(genStep, run.input, ctx, vaultBlock, verdict.feedback),
+              prompt: buildStepPrompt(genStep, run.input, ctx, vaultBlock, verdict.feedback, promptBlock),
             });
             ctx[lastGenName] = redo.output;
             const cost = calcCostUsd(redo.model, redo.inputTokens, redo.outputTokens);
@@ -250,7 +276,7 @@ export async function runPipeline(runId: string): Promise<void> {
             agent: step.agent,
             model: step.model ?? MODELS.SONNET,
             useWebSearch: step.useWebSearch,
-            prompt: buildStepPrompt(step, run.input, ctx, vaultBlock, run.feedback),
+            prompt: buildStepPrompt(step, run.input, ctx, vaultBlock, run.feedback, step.name === "image_prompt" ? "" : promptBlock),
           });
           const cost = calcCostUsd(res.model, res.inputTokens, res.outputTokens);
           ctx[step.name] = res.output;

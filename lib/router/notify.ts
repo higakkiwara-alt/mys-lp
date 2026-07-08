@@ -8,6 +8,19 @@ export function verifyRouterSecret(req: Request): boolean {
   return req.headers.get("x-router-secret") === secret;
 }
 
+/** Web管理画面（同一オリジン）からの操作を許可する簡易チェック
+ *  ※本格的なサーバー認証は Day90 セキュリティ整備で導入予定 */
+export function isSameOriginRequest(req: Request): boolean {
+  const origin = req.headers.get("origin") ?? req.headers.get("referer");
+  const host = req.headers.get("host");
+  if (!origin || !host) return false;
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
+
 export type ReportPayload = {
   runId: string;
   status: string;

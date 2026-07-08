@@ -23,7 +23,8 @@ export const DEFAULT_POLICY: RouterPolicy = {
   fableDailyLimitUsd: 10,
   requireApprovalForPublish: true,
   approvalCostThresholdUsd: 2,
-  pinnedNotes: [],
+  // CEO Principles を全依頼で常時参照（オーナー指示 Day30。/api/router/seed で Vault に作成）
+  pinnedNotes: ["Company OS/00_大竹一樹 CEO Principles.md"],
   snsPlatforms: ["Instagram", "LINE", "X"],
 };
 

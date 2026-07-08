@@ -10,6 +10,7 @@ import { runPipeline } from "@/lib/router/orchestrator";
 import { calcCostUsd } from "@/lib/router/pricing";
 import { MODELS } from "@/lib/router/models";
 import { verifyRouterSecret } from "@/lib/router/notify";
+import { selectPrompt } from "@/lib/router/prompt-library";
 
 export const maxDuration = 300; // 非同期実行（after）も同一実行時間内で動く
 
@@ -66,7 +67,9 @@ export async function POST(req: Request) {
     const policy = await getPolicy();
     const fableSpent = await fableSpentTodayUsd();
     const decision = decideThinkModel(c, policy, fableSpent);
-    const plan = buildPlan(c, decision, policy);
+    const plan = buildPlan(c, decision, policy, source);
+    const libPrompt = selectPrompt(c, input);
+    if (libPrompt) plan.promptId = libPrompt.id;
 
     await prisma.routerRun.update({
       where: { id: run.id },

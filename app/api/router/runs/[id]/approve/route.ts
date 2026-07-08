@@ -3,7 +3,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { runPipeline } from "@/lib/router/orchestrator";
-import { verifyRouterSecret } from "@/lib/router/notify";
+import { verifyRouterSecret, isSameOriginRequest } from "@/lib/router/notify";
 
 export const maxDuration = 300;
 
@@ -13,12 +13,12 @@ const ApproveSchema = z.object({
   by: z.string().default("owner"),
 });
 
-// 承認キュー操作（LINE「承認 <runId>」/「却下 <runId> 指示」→ n8n WF-0 経由で呼ばれる）
+// 承認キュー操作（LINE「承認 <runId>」→ n8n WF-0 / Dashboard 承認ボタン → 同一オリジン）
 // - approve: 承認して続行（publish 等へ進む）
 // - reject : note があれば修正指示として最初から再生成、なければ中止
 // - retry  : エラー実行の再実行
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  if (!verifyRouterSecret(req)) {
+  if (!verifyRouterSecret(req) && !isSameOriginRequest(req)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   const { id } = await params;

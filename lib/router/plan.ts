@@ -29,6 +29,8 @@ export type Plan = {
   estimatedUsd: number;
   decision: ModelDecision;
   route: Route;
+  /** 使用するライブラリプロンプトID（実行ログで成功率を追跡） */
+  promptId?: string;
 };
 
 /** 承認が必要か（オーナー指示: SNS投稿・外部送信・重要判断・高コストは必ず承認キュー） */
@@ -46,13 +48,39 @@ export function needsApprovalQueue(
   return { required: false };
 }
 
-export function buildPlan(c: Classification, decision: ModelDecision, policy: RouterPolicy): Plan {
+export function buildPlan(
+  c: Classification,
+  decision: ModelDecision,
+  policy: RouterPolicy,
+  source?: string
+): Plan {
   const route = decideRoute(c, decision, policy);
   const steps: PlanStep[] = [];
 
   const isSnsAnnounce = c.needs_approval && (c.domain === "SNS" || c.intent === "create_text" || c.intent === "create_image");
+  const isVoiceMemo = source === "voice" && (c.intent === "knowledge" || c.intent === "manage");
 
-  if (isSnsAnnounce) {
+  if (isVoiceMemo) {
+    // 音声→知識化WF: 文字起こし(n8n済) → 要約 → 判断 → タスク化 → Obsidian保存 → LINE報告
+    steps.push(
+      {
+        name: "knowledge",
+        kind: "llm",
+        agent: "Knowledge",
+        model: MODELS.SONNET,
+        instruction:
+          "音声メモの文字起こしを知識化する。①要約3行 ②内容の構造化（トピック別見出し）③決定事項（数字・日付を正確に）④アイデア・気づき。聞き取り不明瞭な箇所は【要確認】を付ける。",
+      },
+      {
+        name: "tasks",
+        kind: "llm",
+        agent: "COO",
+        model: MODELS.SONNET,
+        instruction:
+          "前ステップの内容からタスクを抽出する。各タスク: 内容/担当（不明なら大竹）/期限（明示がなければ提案）/優先度(高中低)。経営判断が必要な項目は「■要判断」として分離する。タスクがなければ「タスクなし」と明記。",
+      }
+    );
+  } else if (isSnsAnnounce) {
     // SNS Agent フロー: 目的確認→投稿案→媒体別最適化→画像/動画案→QA→承認→投稿
     steps.push(
       {
@@ -145,6 +173,7 @@ export function buildAck(c: Classification, plan: Plan): string {
 
 export function stepLabel(name: string): string {
   const labels: Record<string, string> = {
+    tasks: "タスク化",
     think: "方針整理",
     write: "本文作成",
     image_prompt: "画像・動画案",
