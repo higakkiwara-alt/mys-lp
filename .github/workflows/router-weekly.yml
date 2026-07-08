@@ -1,0 +1,26 @@
+name: AI Router Weekly Review & Vault Index
+
+on:
+  schedule:
+    - cron: "0 21 * * 0" # 毎週月曜 6:00 JST — 今週の改善提案（Reviewer Agent）
+    - cron: "0 18 * * *" # 毎日 3:00 JST — RAGインデックス差分同期
+  workflow_dispatch:
+
+jobs:
+  weekly-review:
+    if: github.event.schedule == '0 21 * * 0' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate weekly improvement review
+        run: |
+          curl -s -X POST "${{ vars.APP_URL }}/api/router/review" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+  vault-index:
+    if: github.event.schedule == '0 18 * * *' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync vault RAG index (diff only)
+        run: |
+          curl -s -X POST "${{ vars.APP_URL }}/api/router/vault-index" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

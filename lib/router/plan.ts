@@ -57,10 +57,121 @@ export function buildPlan(
   const route = decideRoute(c, decision, policy);
   const steps: PlanStep[] = [];
 
+  const text = `${c.title} ${c.tags.join(" ")}`;
   const isSnsAnnounce = c.needs_approval && (c.domain === "SNS" || c.intent === "create_text" || c.intent === "create_image");
   const isVoiceMemo = source === "voice" && (c.intent === "knowledge" || c.intent === "manage");
+  const isVideoContent = source === "video";
+  // 不成約分析（Day90④ 専用Agent: BMU動画・商談・カウンセリングの分析）
+  const isSalesAnalysis =
+    /不成約|成約|商談|カウンセリング|BMU|ロールプレイ/.test(text) &&
+    (c.domain === "営業" || c.domain === "経営" || c.domain === "美容室") &&
+    (c.intent === "think" || c.intent === "knowledge");
+  // 口コミ・クレームAgent（Day90⑤）
+  const isReviewCare = /口コミ|レビュー|クレーム|★|星[1-5]/.test(`${text} ${c.output_type}`) &&
+    (c.intent === "create_text" || c.intent === "think");
 
-  if (isVoiceMemo) {
+  if (isVideoContent) {
+    // 動画WF（Day90③）: 文字起こし(n8n済) → 知識化 → 教材 → SNS → Shorts → YouTube → 保存
+    steps.push(
+      {
+        name: "knowledge",
+        kind: "llm",
+        agent: "Knowledge",
+        model: MODELS.SONNET,
+        instruction:
+          "動画の文字起こしを知識化する。①動画の主題と結論 ②主張・ノウハウの構造化（見出し別）③使われた具体例・数字 ④視聴者の悩みと解決。聞き取り不明瞭は【要確認】。",
+      },
+      {
+        name: "material",
+        kind: "llm",
+        agent: "Education",
+        model: MODELS.SONNET,
+        instruction: "知識化された内容を教材化する。学習目標 → 本文（構造化）→ 実践ワーク → 確認テスト3問。",
+      },
+      {
+        name: "write",
+        kind: "llm",
+        agent: "SNS",
+        model: MODELS.SONNET,
+        instruction: `動画の内容から媒体別SNS投稿を作成する（${policy.snsPlatforms.join("/")}）。動画の一番強いフックを冒頭に使う。`,
+      },
+      {
+        name: "shorts",
+        kind: "llm",
+        agent: "Video",
+        model: MODELS.SONNET,
+        instruction:
+          "動画から切り出す Shorts/リール案を3本設計する。各案: 切り出し箇所（文字起こし内の該当発言）/フック（最初の2秒のテロップ）/構成/長さ。",
+      },
+      {
+        name: "youtube",
+        kind: "llm",
+        agent: "Video",
+        model: MODELS.SONNET,
+        instruction:
+          "YouTube用のメタデータを作成する。タイトル案3つ（検索キーワード込み）/概要欄（要約+チャプター+CTA）/タグ10個/サムネ文言案。",
+      },
+      { name: "qa", kind: "qa", agent: "QA", model: MODELS.HAIKU }
+    );
+  } else if (isSalesAnalysis) {
+    // 不成約分析WF（専用 SalesAnalyst Agent。分析結果は Company OS/営業分析 に蓄積され会社資産になる）
+    steps.push(
+      {
+        name: "analyze",
+        kind: "llm",
+        agent: "SalesAnalyst",
+        model: decision.escalated ? decision.model : MODELS.SONNET,
+        instruction:
+          "商談/カウンセリング内容を構造分析する。①成約/不成約の判定と決定的瞬間 ②不成約理由・成約理由（顧客の言葉を引用）③出た反論とその場の返答の評価 ④よくある質問として蓄積すべきもの ⑤過去の営業分析（Company OS/営業分析）との共通パターン。",
+      },
+      {
+        name: "improve",
+        kind: "llm",
+        agent: "SalesAnalyst",
+        model: MODELS.SONNET,
+        instruction:
+          "分析結果から営業改善を提案する。①トーク改善（Before→Afterの台本形式）②カウンセリングの構成変更 ③事前に潰せる反論への先回り ④明日から使える一言。",
+      },
+      {
+        name: "roleplay",
+        kind: "llm",
+        agent: "SalesAnalyst",
+        model: MODELS.SONNET,
+        instruction:
+          "スタッフ練習用のAIロールプレイ台本を作成する。①顧客ペルソナ（今回の不成約/反論パターンを再現）②ロールプレイの進行（顧客役のセリフ・分岐）③合格基準（この返しができたらOK）④振り返り質問。",
+      }
+    );
+  } else if (isReviewCare) {
+    // 口コミ・クレームAgent（Day90⑤）: 分類→方針参照(RAG)→返信案→改善案→教育コンテンツ化
+    steps.push(
+      {
+        name: "reply",
+        kind: "llm",
+        agent: "CS",
+        model: MODELS.SONNET,
+        instruction:
+          "口コミ/クレームを分類（感情・重大度・カテゴリ）した上で返信案を作成する。会社方針・過去の返信（Company OS）と一貫させる。公開返信なら「これから読む見込み客」向けの文章として書く。※送信は必ずオーナー承認後。",
+      },
+      {
+        name: "improve",
+        kind: "llm",
+        agent: "CS",
+        model: MODELS.SONNET,
+        instruction:
+          "この口コミ/クレームから担当者・店舗向けの改善案を作成する。①根本原因の仮説 ②再発防止の具体的な行動変更（誰が・何を）③カルテ/SOPに残すべき内容。",
+      },
+      {
+        name: "educate",
+        kind: "llm",
+        agent: "Education",
+        model: MODELS.SONNET,
+        instruction:
+          "この事例を教育コンテンツ化する。①ケーススタディ（状況の匿名化）②何が起きたか/どうすべきだったか ③ロールプレイ用の状況設定 ④朝礼で共有できる3分版。",
+      },
+      { name: "qa", kind: "qa", agent: "QA", model: MODELS.HAIKU },
+      { name: "approval", kind: "approval", agent: "COO" }
+    );
+  } else if (isVoiceMemo) {
     // 音声→知識化WF: 文字起こし(n8n済) → 要約 → 判断 → タスク化 → Obsidian保存 → LINE報告
     steps.push(
       {
@@ -174,6 +285,14 @@ export function buildAck(c: Classification, plan: Plan): string {
 export function stepLabel(name: string): string {
   const labels: Record<string, string> = {
     tasks: "タスク化",
+    material: "教材化",
+    shorts: "Shorts設計",
+    youtube: "YouTube最適化",
+    analyze: "営業分析",
+    improve: "改善提案",
+    roleplay: "ロールプレイ生成",
+    reply: "返信案",
+    educate: "教育コンテンツ化",
     think: "方針整理",
     write: "本文作成",
     image_prompt: "画像・動画案",

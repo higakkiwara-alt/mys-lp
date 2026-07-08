@@ -145,6 +145,7 @@ async function putFile(path: string, content: string, message: string): Promise<
 export function vaultFolderFor(intent: string, domain: string, tags: string[] = []): string {
   const t = tags.join(" ");
   if (/売却|M&A|Exit/i.test(t)) return "Company OS/売却・M&A";
+  if (/不成約|成約|商談|BMU|営業分析|ロールプレイ/.test(t)) return "Company OS/営業分析";
   if (/会議|ミーティング|打ち合わせ/.test(t)) return "Meetings";
   if (domain === "経営" || domain === "財務") return "Company OS/経営判断";
   if (domain === "美容室") return "Company OS/店舗運営";

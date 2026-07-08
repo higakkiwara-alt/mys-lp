@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  const [runs, todayAgg, monthAgg, byModel] = await Promise.all([
+  const [runs, todayAgg, monthAgg, byModel, weeklyReview] = await Promise.all([
     prisma.routerRun.findMany({
       orderBy: { createdAt: "desc" },
       take: limit,
@@ -37,6 +37,7 @@ export async function GET(req: Request) {
       _sum: { costUsd: true, inputTokens: true, outputTokens: true },
       _count: true,
     }),
+    prisma.routerConfig.findUnique({ where: { key: "weeklyReview" } }),
   ]);
 
   return NextResponse.json({
@@ -52,5 +53,6 @@ export async function GET(req: Request) {
         outputTokens: m._sum.outputTokens ?? 0,
       })),
     },
+    weeklyReview: weeklyReview?.value ?? null,
   });
 }

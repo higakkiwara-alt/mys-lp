@@ -42,7 +42,8 @@ export const GOLDEN_CASES: GoldenCase[] = [
       fable_worthiness: "売上に直結する成約率低下の原因分析と打ち手決定のため",
       title: "髪質改善コース不成約分析", tags: ["経営", "成約率", "分析"],
     },
-    expect: { modelTier: "fable", agent: "CEO", approvalRequired: true, folder: "Company OS/経営判断" },
+    // Day90④: 不成約分析は専用 SalesAnalyst Agent + Company OS/営業分析 に蓄積（オーナー指示で更新）
+    expect: { modelTier: "fable", agent: "SalesAnalyst", approvalRequired: true, folder: "Company OS/営業分析" },
   },
   {
     id: "gc03-sns-announce",

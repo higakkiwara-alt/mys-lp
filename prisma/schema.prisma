@@ -363,3 +363,36 @@ model RouterConfig {
   reason    String?  // 変更理由（自動最適化の監査ログ）
   updatedAt DateTime @updatedAt
 }
+
+// Day90: RAG インデックス（Vault全体の埋め込み検索・優先順位付き）
+model VaultIndex {
+  path      String   @id // Vault内パス
+  folder    String   // トップレベルフォルダ（優先順位判定用）
+  title     String
+  tags      String[]
+  sha       String   // GitHub blob sha（変更検知）
+  excerpt   String   // 本文抜粋（文脈注入用）
+  embedding Json     // number[] text-embedding-3-small
+  updatedAt DateTime @updatedAt
+
+  @@index([folder])
+}
+
+// Day90: CEO Memory（判断の理由・優先事項・結果の蓄積 → 「過去の大竹ならどう判断したか」の源泉）
+model CeoMemory {
+  id           String    @id @default(cuid())
+  runId        String    @unique
+  title        String
+  background   String    // 背景
+  options      String    // 検討した選択肢
+  decision     String    // 決定
+  reason       String    // なぜその判断をしたか
+  priorities   String    // 何を優先したか
+  outcome      String?   // 結果はどうだったか（後日「結果 <runId> ...」で記録）
+  outcomeAt    DateTime?
+  tags         String[]
+  obsidianPath String?
+  createdAt    DateTime  @default(now())
+
+  @@index([createdAt])
+}

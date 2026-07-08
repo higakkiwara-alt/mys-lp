@@ -43,6 +43,8 @@ function usd(v: string | number | null | undefined): string {
 export default function RouterDashboard() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [weeklyReview, setWeeklyReview] = useState<{ date: string; report: string } | null>(null);
+  const [showReview, setShowReview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -57,6 +59,7 @@ export default function RouterDashboard() {
       const data = await res.json();
       setRuns(data.runs ?? []);
       setStats(data.stats ?? null);
+      setWeeklyReview(data.weeklyReview ?? null);
     } finally {
       setLoading(false);
     }
@@ -181,6 +184,23 @@ export default function RouterDashboard() {
           </div>
         </div>
       </div>
+
+      {/* 今週の改善提案（Reviewer Agent 週次自動生成） */}
+      {weeklyReview && (
+        <section className="p-4 bg-[#13131F] border border-gold/20 rounded-lg">
+          <button onClick={() => setShowReview(!showReview)} className="w-full flex items-center justify-between">
+            <span className="text-xs text-gold uppercase tracking-wider">
+              📊 今週の改善提案（{weeklyReview.date}・Reviewer Agent）
+            </span>
+            {showReview ? <ChevronUp size={14} className="text-gold" /> : <ChevronDown size={14} className="text-gold" />}
+          </button>
+          {showReview && (
+            <pre className="mt-3 text-[11px] text-gray-300 whitespace-pre-wrap max-h-96 overflow-y-auto dashboard-scroll">
+              {weeklyReview.report}
+            </pre>
+          )}
+        </section>
+      )}
 
       {/* 承認待ち */}
       <section>

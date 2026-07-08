@@ -60,7 +60,7 @@
         "conditions": {
           "boolean": [
             {
-              "value1": "={{ /^(承認|却下|再実行)\\s+\\S+/.test($json.body?.events?.[0]?.message?.text ?? '') }}",
+              "value1": "={{ /^(承認|却下|再実行|結果)\\s+\\S+/.test($json.body?.events?.[0]?.message?.text ?? '') }}",
               "value2": true
             }
           ]
@@ -85,7 +85,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ action: {'承認':'approve','却下':'reject','再実行':'retry'}[$json.body.events[0].message.text.split(/\\s+/)[0]], note: $json.body.events[0].message.text.split(/\\s+/).slice(2).join(' '), by: 'line' }) }}",
+        "jsonBody": "={{ JSON.stringify({ action: {'承認':'approve','却下':'reject','再実行':'retry','結果':'outcome'}[$json.body.events[0].message.text.split(/\\s+/)[0]], note: $json.body.events[0].message.text.split(/\\s+/).slice(2).join(' '), by: 'line' }) }}",
         "options": { "timeout": 30000 }
       },
       "id": "post-approve",

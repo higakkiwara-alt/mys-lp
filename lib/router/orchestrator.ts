@@ -7,7 +7,9 @@ import { getPolicy } from "./config";
 import type { Classification } from "./classifier";
 import type { Plan, PlanStep } from "./plan";
 import { stepLabel } from "./plan";
-import { searchVaultContext, saveNoteToVault, isVaultConfigured } from "@/lib/obsidian/vault";
+import { saveNoteToVault, isVaultConfigured } from "@/lib/obsidian/vault";
+import { retrieveContext } from "@/lib/obsidian/rag";
+import { recordCeoMemory, getRelatedMemories } from "./ceo-memory";
 import { sendReport } from "./notify";
 import { PROMPT_LIBRARY } from "@/prompts/library";
 
@@ -135,9 +137,9 @@ export async function runPipeline(
   try {
     const policy = await getPolicy();
 
-    // Company OS（Obsidian）参照: ピン留めノート + 優先フォルダ検索
-    const vault = await searchVaultContext(
-      [c.domain, ...c.tags, c.title].join(" "),
+    // Company OS（Obsidian）参照: ピン留めノート + RAG（優先順位: CEO Principles→方針→店舗ルール→判断→Meeting→Knowledge→Prompt→Archive）
+    const vault = await retrieveContext(
+      [c.domain, ...c.tags, c.title, run.input.slice(0, 500)].join(" "),
       policy.pinnedNotes
     );
     const libPrompt = plan.promptId ? PROMPT_LIBRARY.find((p) => p.id === plan.promptId) : null;
@@ -145,11 +147,22 @@ export async function runPipeline(
       ? `【プロンプトライブラリ「${libPrompt.title}」— この様式・原則に従うこと】\n${libPrompt.body}`
       : "";
 
-    const vaultBlock = vault.notes.length
-      ? `【Company OS（Obsidian）の関連ノート — 判断の前提として必ず考慮】\n${vault.notes
-          .map((n) => `--- ${n.path} ---\n${n.excerpt}`)
-          .join("\n")}`
-      : "";
+    // 経営・財務の判断には「過去の大竹の判断」（CEO Memory）も注入する
+    const isCeoDecision = c.intent === "think" && (c.domain === "経営" || c.domain === "財務");
+    const memories = isCeoDecision ? await getRelatedMemories(c.tags) : "";
+
+    const vaultBlock = [
+      vault.notes.length
+        ? `【Company OS（Obsidian）の関連ノート — 判断の前提として必ず考慮】\n${vault.notes
+            .map((n) => `--- ${n.path} ---\n${n.excerpt}`)
+            .join("\n")}`
+        : "",
+      memories
+        ? `【過去の大竹一樹の判断（CEO Memory）— 整合性を確認し、矛盾する場合は指摘すること】\n${memories}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
 
     // 実行済みステップの出力を復元（承認後の再開・リトライ対応）
     const doneSteps = await prisma.routerStep.findMany({
@@ -327,6 +340,13 @@ export async function runPipeline(
       noteStatus: plan.approvalRequired ? "approved" : "final",
     });
 
+    // CEO Memory: 経営・財務の判断は「なぜ・何を優先したか」を構造化して蓄積（優先順位⑥）
+    let memoryNote = "";
+    if (c.intent === "think" && (c.domain === "経営" || c.domain === "財務")) {
+      const saved = await recordCeoMemory(runId, c, mainOutput, obsidianPath);
+      if (saved) memoryNote = `🧠 CEO Memory に記録（結果の追記: 「結果 ${runId} …」と返信）`;
+    }
+
     const durationMs = Date.now() - startedAt;
     const summary = [
       `✅ 完了「${c.title}」`,
@@ -338,6 +358,7 @@ export async function runPipeline(
           ? "保存先: 保存失敗"
           : "保存先: Vault未設定",
       publishNote || null,
+      memoryNote || null,
       ``,
       `--- 結果 ---`,
       mainOutput.slice(0, 3000),

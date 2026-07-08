@@ -4,12 +4,13 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { runPipeline } from "@/lib/router/orchestrator";
 import { verifyRouterSecret, isSameOriginRequest } from "@/lib/router/notify";
+import { recordOutcome } from "@/lib/router/ceo-memory";
 
 export const maxDuration = 300;
 
 const ApproveSchema = z.object({
-  action: z.enum(["approve", "reject", "retry"]),
-  note: z.string().max(4000).optional(), // 却下時の修正指示（あれば修正して再実行）
+  action: z.enum(["approve", "reject", "retry", "outcome"]),
+  note: z.string().max(4000).optional(), // reject: 修正指示 / outcome: 判断の結果
   by: z.string().default("owner"),
 });
 
@@ -31,6 +32,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const run = await prisma.routerRun.findUnique({ where: { id } });
   if (!run) return NextResponse.json({ error: "not found", output: "該当の実行が見つかりません" }, { status: 404 });
+
+  // CEO Memory: 判断の結果を記録（「結果 <runId> ...」）
+  if (action === "outcome") {
+    if (!note?.trim()) return NextResponse.json({ output: "結果の内容を書いてください（例: 結果 <runId> 出店を実行し3ヶ月で黒字化）" });
+    const output = await recordOutcome(id, note.trim());
+    return NextResponse.json({ output });
+  }
 
   if (action === "approve") {
     if (run.status !== "waiting_approval") {

@@ -1,0 +1,71 @@
+{
+  "name": "WF-3: 動画 → 文字起こし → AI Router（動画コンテンツWF）",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyX", "value": 15, "unit": "minutes" }] },
+        "triggerOn": "specificFolder",
+        "folderToWatch": "={{ $vars.VIDEO_DRIVE_FOLDER_ID }}",
+        "event": "fileCreated"
+      },
+      "id": "drive-trigger",
+      "name": "Google Drive 新動画検知",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": "={{ $json.id }}"
+      },
+      "id": "download",
+      "name": "動画ダウンロード",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": { "language": "ja" }
+      },
+      "id": "whisper",
+      "name": "Whisper 文字起こし",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [440, 0],
+      "notesInFlow": true,
+      "notes": "25MB超の動画は事前に音声抽出ノード(ffmpeg/API)を挟む"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.ROUTER_BASE_URL }}/api/router/intake",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-ROUTER-SECRET", "value": "={{ $vars.ROUTER_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ input: '（動画: ' + $('Google Drive 新動画検知').item.json.name + '）\\n' + $json.text, source: 'video', eventId: 'video-' + $('Google Drive 新動画検知').item.json.id }) }}",
+        "options": { "timeout": 60000 }
+      },
+      "id": "post-router",
+      "name": "AI Router intake（source=video）",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 0]
+    }
+  ],
+  "connections": {
+    "Google Drive 新動画検知": { "main": [[{ "node": "動画ダウンロード", "type": "main", "index": 0 }]] },
+    "動画ダウンロード": { "main": [[{ "node": "Whisper 文字起こし", "type": "main", "index": 0 }]] },
+    "Whisper 文字起こし": { "main": [[{ "node": "AI Router intake（source=video）", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

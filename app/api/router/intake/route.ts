@@ -16,7 +16,7 @@ export const maxDuration = 300; // 非同期実行（after）も同一実行時�
 
 const IntakeSchema = z.object({
   input: z.string().min(1).max(20000), // 依頼（音声は n8n で文字起こし済みテキスト）
-  source: z.enum(["voice", "line", "web", "n8n", "cron"]).default("web"),
+  source: z.enum(["voice", "video", "line", "web", "n8n", "cron"]).default("web"),
   eventId: z.string().optional(), // 冪等性キー（n8n再送対策）
   sync: z.boolean().optional(), // true なら完了まで待って結果を返す（テスト・web用）
 });
