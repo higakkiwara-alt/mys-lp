@@ -1,9 +1,11 @@
 # AI Router OS — 設計ドキュメント(Phase 0: 設計)
 
-> **ステータス: 🟡 設計レビュー待ち(実装未着手)**
+> **ステータス: 🟢 設計承認済み(2026-07-08)→ Day1 実装完了・レビュー待ち**
 >
-> 開発ルール「① 設計 → ② レビュー → ③ 実装 → ④ テスト → ⑤ ドキュメント → ⑥ 改善提案」に従い、
-> 本ディレクトリは **① 設計** の成果物です。オーナー(大竹一樹)の承認後に ③ 実装へ進みます。
+> 承認条件と正式決定は [11-approved-decisions.md](./11-approved-decisions.md)、
+> Day1 実装内容は [12-day1-implementation.md](./12-day1-implementation.md) を参照。
+> 各ドキュメント末尾の「レビュー観点」への回答は 11 に集約されている(11 が優先)。
+> Day7 着手は Day1 レビュー承認後。
 
 ## 目的(最重要事項)
 
@@ -34,6 +36,8 @@
 | 8 | [08-agents.md](./08-agents.md) | 15 Agent 構成(CEO〜Reviewer) | ⑧ |
 | 9 | [09-roadmap.md](./09-roadmap.md) | ロードマップ(Day1〜Day365) | ⑨ |
 | 10 | [10-dev-process.md](./10-dev-process.md) | 開発プロセス・承認フロー | ⑩ |
+| 11 | [11-approved-decisions.md](./11-approved-decisions.md) | 設計承認記録(2026-07-08)・AI COO要件 | — |
+| 12 | [12-day1-implementation.md](./12-day1-implementation.md) | Day1 実装ドキュメント・改善提案 | — |
 
 ## レビューの進め方
 

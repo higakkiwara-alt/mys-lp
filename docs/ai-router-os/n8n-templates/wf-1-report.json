@@ -1,0 +1,56 @@
+{
+  "name": "WF-1: Router完了報告 → LINE通知",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "router-report",
+        "responseMode": "onReceived"
+      },
+      "id": "webhook-report",
+      "name": "Report Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.headers['x-router-secret'] }}",
+              "value2": "={{ $vars.ROUTER_SECRET }}"
+            }
+          ]
+        }
+      },
+      "id": "verify",
+      "name": "シークレット検証",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/push",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "lineNotifyOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ to: $vars.LINE_OWNER_USER_ID, messages: [{ type: 'text', text: $json.body.summary }] }) }}",
+        "options": {}
+      },
+      "id": "line-push",
+      "name": "LINE Push（オーナーへ報告）",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, -80]
+    }
+  ],
+  "connections": {
+    "Report Webhook": { "main": [[{ "node": "シークレット検証", "type": "main", "index": 0 }]] },
+    "シークレット検証": { "main": [[{ "node": "LINE Push（オーナーへ報告）", "type": "main", "index": 0 }], []] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

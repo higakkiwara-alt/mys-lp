@@ -1,0 +1,111 @@
+{
+  "name": "WF-0: 音声/LINE → AI Router",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "line-intake",
+        "responseMode": "onReceived"
+      },
+      "id": "webhook-line",
+      "name": "LINE Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.body.events[0].message.type }}",
+              "value2": "audio"
+            }
+          ]
+        }
+      },
+      "id": "if-audio",
+      "name": "音声メッセージ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "url": "=https://api-data.line.me/v2/bot/message/{{ $json.body.events[0].message.id }}/content",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "lineNotifyOAuth2Api",
+        "options": { "response": { "response": { "responseFormat": "file" } } }
+      },
+      "id": "get-audio",
+      "name": "音声コンテンツ取得",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, -100]
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": { "language": "ja" }
+      },
+      "id": "whisper",
+      "name": "Whisper 文字起こし",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [660, -100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.ROUTER_BASE_URL }}/api/router/intake",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-ROUTER-SECRET", "value": "={{ $vars.ROUTER_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ input: $json.text ?? $('LINE Webhook').item.json.body.events[0].message.text, source: $('LINE Webhook').item.json.body.events[0].message.type === 'audio' ? 'voice' : 'line', eventId: $('LINE Webhook').item.json.body.events[0].message.id }) }}",
+        "options": { "timeout": 300000 }
+      },
+      "id": "post-router",
+      "name": "AI Router intake",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.line.me/v2/bot/message/reply",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "lineNotifyOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ replyToken: $('LINE Webhook').item.json.body.events[0].replyToken, messages: [{ type: 'text', text: ($json.output ?? '').slice(0, 4500) || $json.error || '処理しました' }] }) }}",
+        "options": {}
+      },
+      "id": "line-reply",
+      "name": "LINE 返信",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 0]
+    }
+  ],
+  "connections": {
+    "LINE Webhook": { "main": [[{ "node": "音声メッセージ?", "type": "main", "index": 0 }]] },
+    "音声メッセージ?": {
+      "main": [
+        [{ "node": "音声コンテンツ取得", "type": "main", "index": 0 }],
+        [{ "node": "AI Router intake", "type": "main", "index": 0 }]
+      ]
+    },
+    "音声コンテンツ取得": { "main": [[{ "node": "Whisper 文字起こし", "type": "main", "index": 0 }]] },
+    "Whisper 文字起こし": { "main": [[{ "node": "AI Router intake", "type": "main", "index": 0 }]] },
+    "AI Router intake": { "main": [[{ "node": "LINE 返信", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

@@ -299,3 +299,62 @@ model TrainingMaterial {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// ============================================================
+// AI Router OS (docs/ai-router-os/ 参照)
+// ============================================================
+
+model RouterRun {
+  id             String       @id @default(cuid())
+  input          String       // 依頼原文（音声の場合は文字起こし後）
+  source         String       // voice | line | web | n8n | cron
+  sourceEventId  String?      @unique // n8n等からの冪等性キー
+  classification Json?        // Classifier出力
+  plan           Json?        // 実行プラン
+  status         String       @default("queued") // queued | running | waiting_approval | done | error
+  resultSummary  String?      // 依頼者向けの結果要約
+  inputTokens    Int          @default(0)
+  outputTokens   Int          @default(0)
+  costUsd        Decimal      @default(0) @db.Decimal(10, 6)
+  estimatedUsd   Decimal?     @db.Decimal(10, 6)
+  durationMs     Int?
+  error          String?
+  obsidianPath   String?      // 成果物の保存先（Vault内パス）
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  steps          RouterStep[]
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+model RouterStep {
+  id           String    @id @default(cuid())
+  runId        String
+  run          RouterRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  name         String    // classify | think | write | search | save | report ...
+  agent        String    // COO | CEO | SNS | Knowledge ...
+  model        String?   // claude-fable-5 | claude-sonnet-5 | ...
+  status       String    @default("running") // running | done | error | skipped
+  fableReason  String?   // Fable 5使用時の理由（コスト規律・ROI分析用）
+  inputTokens  Int       @default(0)
+  outputTokens Int       @default(0)
+  costUsd      Decimal   @default(0) @db.Decimal(10, 6)
+  durationMs   Int?
+  output       String?   // 成果物本文 or 参照
+  error        String?
+  createdAt    DateTime  @default(now())
+
+  @@index([runId])
+  @@index([model, createdAt])
+}
+
+// Router の可変ポリシー（Fable閾値・日次上限など）。
+// Reviewer Agent が月次のコスト/ROI/使用頻度/成果の分析結果で更新できる（自動最適化）
+model RouterConfig {
+  key       String   @id
+  value     Json
+  updatedBy String   @default("system") // system | owner | reviewer-agent
+  reason    String?  // 変更理由（自動最適化の監査ログ）
+  updatedAt DateTime @updatedAt
+}

@@ -22,6 +22,7 @@ Agent = 「役割別のシステムプロンプト + 使用可能ツール + 既
 | **Automation** | n8n ワークフロー設計・起動 | Sonnet | n8n API/webhook | 「これ自動化して」を受ける |
 | **QA** | 品質管理(成果物の事前チェック) | Sonnet | チェックリスト(ブランド・事実・法務注意) | sns 承認ゲートの前段で自動実行 |
 | **Reviewer** | レビュー・週次改善提案 | Sonnet(設計レビューは Opus 4.8) | 実行ログ、Dashboard 集計 | 07の改善案フィード担当 |
+| **SNS Analyst** | 投稿結果の分析→学習→改善提案(オーナー承認で追加) | Sonnet | SNS各社の分析API、PostAnalytics | Day90。勝ちパターンを Knowledge 化し SNS Agent の文脈に注入 |
 
 ## 2. Agent 定義フォーマット
 
