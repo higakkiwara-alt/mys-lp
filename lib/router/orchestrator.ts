@@ -142,6 +142,12 @@ export async function runPipeline(
       [c.domain, ...c.tags, c.title, run.input.slice(0, 500)].join(" "),
       policy.pinnedNotes
     );
+    // RAG参照を実行記録に残す（実運用フェーズ: RAG精度検証の材料）
+    await prisma.routerRun.update({
+      where: { id: runId },
+      data: { vaultRefs: vault.notes.map((n) => n.path), retrievalMethod: vault.method },
+    });
+
     const libPrompt = plan.promptId ? PROMPT_LIBRARY.find((p) => p.id === plan.promptId) : null;
     const promptBlock = libPrompt
       ? `【プロンプトライブラリ「${libPrompt.title}」— この様式・原則に従うこと】\n${libPrompt.body}`

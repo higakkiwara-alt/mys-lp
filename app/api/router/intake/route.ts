@@ -9,7 +9,7 @@ import { buildPlan, buildAck } from "@/lib/router/plan";
 import { runPipeline } from "@/lib/router/orchestrator";
 import { calcCostUsd } from "@/lib/router/pricing";
 import { MODELS } from "@/lib/router/models";
-import { verifyRouterSecret } from "@/lib/router/notify";
+import { verifyRouterSecret, sendReport } from "@/lib/router/notify";
 import { selectPrompt } from "@/lib/router/prompt-library";
 
 export const maxDuration = 300; // 非同期実行（after）も同一実行時間内で動く
@@ -83,6 +83,32 @@ export async function POST(req: Request) {
         costUsd: classifyCost,
       },
     });
+
+    // 動画パイロット運用ガード: 日次上限（既定10本）超過分は自動実行せず承認待ちに保留
+    // （オーナー指示: BMU動画300本を一括処理しない。10本レビュー後に判断）
+    if (source === "video") {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const videoRunsToday = await prisma.routerRun.count({
+        where: { source: "video", createdAt: { gte: startOfDay }, status: { notIn: ["rejected"] }, id: { not: run.id } },
+      });
+      if (videoRunsToday >= policy.videoDailyLimit) {
+        plan.steps.unshift({ name: "approval", kind: "approval", agent: "COO" });
+        plan.approvalRequired = true;
+        plan.approvalReason = `動画WFの日次上限（${policy.videoDailyLimit}本）超過のため保留`;
+        await prisma.routerRun.update({
+          where: { id: run.id },
+          data: { plan: JSON.parse(JSON.stringify(plan)), status: "waiting_approval" },
+        });
+        const holdMsg = `🟡 保留「${c.title}」動画WFの日次上限（${policy.videoDailyLimit}本）に達しました。\n実行する場合: 「承認 ${run.id}」と返信`;
+        await sendReport({
+          runId: run.id, status: "waiting_approval", title: c.title, source,
+          agent: "COO", model: "-", costUsd: 0, estimatedUsd: plan.estimatedUsd,
+          durationMs: 0, obsidianPath: null, summary: holdMsg,
+        });
+        return NextResponse.json({ runId: run.id, status: "waiting_approval", output: holdMsg });
+      }
+    }
 
     // [3] 実行（同期指定時は待つ / 通常は応答後に非同期実行 → 完了時 LINE Push）
     if (sync) {

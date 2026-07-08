@@ -86,3 +86,9 @@ describe("口コミ・クレームAgent（Day90⑤）", () => {
     expect(plan.approvalRequired).toBe(true);
   });
 });
+
+describe("実運用フェーズ: 動画パイロットガード", () => {
+  it("動画WFの日次上限が既定10本に設定されている（BMU 300本の一括処理防止）", () => {
+    expect(DEFAULT_POLICY.videoDailyLimit).toBe(10);
+  });
+});

@@ -122,6 +122,20 @@ function parseFrontmatter(content: string): { title?: string; tags: string[] } {
   return { title, tags: tagsRaw.split(",").map((t) => t.trim()).filter(Boolean) };
 }
 
+/** 差分同期を remaining=0 まで繰り返す（初回インデックス用。実行予算内で可能な限り進める） */
+export async function syncVaultIndexFull(budgetMs = 240_000): Promise<{
+  total: number; indexed: number; updated: number; removed: number; remaining: number; rounds: number;
+}> {
+  const started = Date.now();
+  let last = await syncVaultIndex(100);
+  let rounds = 1;
+  while (last.remaining > 0 && Date.now() - started < budgetMs) {
+    last = await syncVaultIndex(100);
+    rounds++;
+  }
+  return { ...last, rounds };
+}
+
 /**
  * Vault → VaultIndex の差分同期。1回の呼び出しで最大 maxFiles 件を埋め込み（実行時間対策）
  * 戻り値: 処理状況（Dashboard/レスポンス表示用）

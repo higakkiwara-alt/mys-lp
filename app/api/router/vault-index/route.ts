@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { syncVaultIndex } from "@/lib/obsidian/rag";
+import { syncVaultIndex, syncVaultIndexFull } from "@/lib/obsidian/rag";
 import { verifyRouterSecret } from "@/lib/router/notify";
 
 export const maxDuration = 300;
@@ -12,7 +12,11 @@ export async function POST(req: Request) {
   if (!cronOk && !verifyRouterSecret(req)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  const result = await syncVaultIndex(100);
+  const { searchParams } = new URL(req.url);
+  // ?full=1 で remaining=0 まで実行予算内で繰り返す（初回インデックス用）
+  const result = searchParams.get("full")
+    ? await syncVaultIndexFull()
+    : await syncVaultIndex(100);
   return NextResponse.json(result);
 }
 

@@ -16,6 +16,8 @@ export type RouterPolicy = {
   pinnedNotes: string[];
   /** SNS 媒体別最適化の対象（write ステップで生成する媒体） */
   snsPlatforms: string[];
+  /** 動画WFの日次自動実行上限。超過分は承認待ちに保留（BMU 300本の一括処理防止・パイロット運用） */
+  videoDailyLimit: number;
 };
 
 export const DEFAULT_POLICY: RouterPolicy = {
@@ -26,6 +28,7 @@ export const DEFAULT_POLICY: RouterPolicy = {
   // CEO Principles を全依頼で常時参照（オーナー指示 Day30。/api/router/seed で Vault に作成）
   pinnedNotes: ["Company OS/00_大竹一樹 CEO Principles.md"],
   snsPlatforms: ["Instagram", "LINE", "X"],
+  videoDailyLimit: 10,
 };
 
 const POLICY_KEY = "policy";

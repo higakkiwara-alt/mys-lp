@@ -325,6 +325,8 @@ model RouterRun {
   durationMs     Int?
   error          String?
   obsidianPath   String?      // 成果物の保存先（Vault内パス）
+  vaultRefs      String[]     @default([]) // 参照した Company OS ノート（RAG精度検証用）
+  retrievalMethod String?     // rag | search | none（RAG参照の記録）
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   steps          RouterStep[]
