@@ -35,19 +35,64 @@ async function gh(cfg: NonNullable<ReturnType<typeof config>>, path: string, ini
   });
 }
 
-/** 関連ノート検索（Day1: GitHub code search。Day90 で埋め込みベクトル検索に置換） */
-export async function searchVaultContext(query: string): Promise<{ notes: VaultNote[] }> {
+// 優先参照フォルダ（オーナー指示: 過去の考え・会社方針・店舗ルール・過去プロンプト・売却構想を優先）
+const PRIORITY_FOLDERS = ["Company OS", "Prompts"];
+
+async function searchOnce(
+  cfg: NonNullable<ReturnType<typeof config>>,
+  query: string,
+  pathQualifier: string | null,
+  perPage: number
+): Promise<string[]> {
+  try {
+    const qualifier = pathQualifier ? ` path:"${pathQualifier}"` : "";
+    const q = encodeURIComponent(`${query} repo:${cfg.repo} extension:md${qualifier}`);
+    const res = await gh(cfg, `/search/code?q=${q}&per_page=${perPage}`);
+    if (!res.ok) return [];
+    const data = (await res.json()) as { items?: Array<{ path: string }> };
+    return (data.items ?? []).map((i) => i.path);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * 関連ノート検索（Day7: 優先フォルダ→全体の2段階 + ピン留めノート。Day90 で埋め込みベクトル検索に置換）
+ * ピン留めノート（会社方針など常時参照すべきノート）は pinnedPaths で渡す
+ */
+export async function searchVaultContext(
+  query: string,
+  pinnedPaths: string[] = []
+): Promise<{ notes: VaultNote[] }> {
   const cfg = config();
   if (!cfg) return { notes: [] };
   try {
-    const q = encodeURIComponent(`${query} repo:${cfg.repo} extension:md`);
-    const res = await gh(cfg, `/search/code?q=${q}&per_page=3`);
-    if (!res.ok) return { notes: [] };
-    const data = (await res.json()) as { items?: Array<{ path: string }> };
     const notes: VaultNote[] = [];
-    for (const item of data.items ?? []) {
-      const content = await readNote(item.path);
-      if (content) notes.push({ path: item.path, excerpt: content.slice(0, 2000) });
+    const seen = new Set<string>();
+
+    // 0) ピン留めノート（会社方針・価値観など）は常に読む
+    for (const path of pinnedPaths.slice(0, 3)) {
+      const content = await readNote(path);
+      if (content) {
+        notes.push({ path, excerpt: content.slice(0, 2000) });
+        seen.add(path);
+      }
+    }
+
+    // 1) 優先フォルダ（Company OS / Prompts）→ 2) Vault全体
+    const paths: string[] = [];
+    for (const folder of PRIORITY_FOLDERS) {
+      paths.push(...(await searchOnce(cfg, query, folder, 2)));
+    }
+    paths.push(...(await searchOnce(cfg, query, null, 3)));
+
+    for (const path of paths) {
+      if (seen.has(path) || notes.length >= 5) continue;
+      const content = await readNote(path);
+      if (content) {
+        notes.push({ path, excerpt: content.slice(0, 1500) });
+        seen.add(path);
+      }
     }
     return { notes };
   } catch {
@@ -91,14 +136,20 @@ async function putFile(path: string, content: string, message: string): Promise<
   return res.ok;
 }
 
-// 分類 → 保存先フォルダ（docs/ai-router-os/05 §1）
-export function vaultFolderFor(intent: string, domain: string): string {
+// 分類 → 保存先フォルダ（オーナー指定の仮マッピング、11-approved-decisions.md / Day7指示）
+export function vaultFolderFor(intent: string, domain: string, tags: string[] = []): string {
+  const t = tags.join(" ");
+  if (/売却|M&A|Exit/i.test(t)) return "Company OS/売却・M&A";
+  if (/会議|ミーティング|打ち合わせ/.test(t)) return "Meetings";
   if (domain === "経営" || domain === "財務") return "Company OS/経営判断";
-  if (intent === "knowledge") return "Knowledge";
+  if (domain === "美容室") return "Company OS/店舗運営";
+  if (domain === "採用" || domain === "教育") return "Company OS/採用・教育";
+  if (domain === "技術" || intent === "automation" || intent === "create_code")
+    return "Company OS/AI・自動化";
+  if (domain === "SNS" || intent === "create_image" || intent === "create_video") return "SNS";
   if (intent === "manage") return "Projects";
-  if (domain === "SNS") return "Projects/SNS";
-  if (domain === "教育") return "Knowledge/教育";
-  return "Knowledge/受信箱";
+  if (intent === "knowledge") return "Knowledge";
+  return "Knowledge";
 }
 
 function today(): string {
@@ -120,6 +171,8 @@ export type SaveNoteInput = {
   model: string;
   costUsd: number;
   vaultRefs: string[];
+  /** 承認済み/下書き等の状態（frontmatterに記録） */
+  noteStatus?: string;
 };
 
 /** 成果物を Vault に保存し、Daily Note に追記。戻り値は保存パス（未設定/失敗は null） */
@@ -127,7 +180,7 @@ export async function saveNoteToVault(n: SaveNoteInput): Promise<string | null> 
   if (!isVaultConfigured()) return null;
 
   const date = today();
-  const folder = vaultFolderFor(n.intent, n.domain);
+  const folder = vaultFolderFor(n.intent, n.domain, n.tags);
   const path = `${folder}/${date} ${sanitize(n.title)}.md`;
 
   const frontmatter = [
@@ -136,6 +189,7 @@ export async function saveNoteToVault(n: SaveNoteInput): Promise<string | null> 
     `title: ${n.title}`,
     `date: ${date}`,
     `tags: [${n.tags.join(", ")}]`,
+    `status: ${n.noteStatus ?? "final"}`,
     `source: router-run:${n.runId}`,
     `agent: ${n.agent}`,
     `model: ${n.model}`,
@@ -147,12 +201,12 @@ export async function saveNoteToVault(n: SaveNoteInput): Promise<string | null> 
     ? `\n\n## 関連ノート\n${n.vaultRefs.map((r) => `- [[${r.replace(/\.md$/, "")}]]`).join("\n")}`
     : "";
 
-  const content = `${frontmatter}\n\n${n.body}${related}\n\n- [[Daily Note/${date}]]\n`;
+  const content = `${frontmatter}\n\n${n.body}${related}\n\n- [[Daily Notes/${date}]]\n`;
   const ok = await putFile(path, content, `AI Router: ${n.title}`);
   if (!ok) return null;
 
   // Daily Note に1行追記（双方向リンク）
-  const dailyPath = `Daily Note/${date}.md`;
+  const dailyPath = `Daily Notes/${date}.md`;
   const existing = (await readNote(dailyPath)) ?? `---\ntype: daily\ndate: ${date}\n---\n\n# ${date}\n\n## AI Router 実行ログ\n`;
   const line = `- ${new Date().toLocaleTimeString("ja-JP", { timeZone: "Asia/Tokyo", hour: "2-digit", minute: "2-digit" })} [[${path.replace(/\.md$/, "")}|${n.title}]] (${n.agent}/${n.model}, $${n.costUsd.toFixed(3)})`;
   await putFile(dailyPath, `${existing.trimEnd()}\n${line}\n`, `Daily Note: ${n.title}`);

@@ -10,12 +10,21 @@ export type RouterPolicy = {
   fableDailyLimitUsd: number;
   /** 発信系ステップは承認必須（オーナー指示: 承認後投稿がデフォルト） */
   requireApprovalForPublish: boolean;
+  /** 推定コストがこの額（USD）を超える実行は承認キューに入れる */
+  approvalCostThresholdUsd: number;
+  /** 常に文脈に読み込む Vault ノート（会社方針・価値観・売却構想など） */
+  pinnedNotes: string[];
+  /** SNS 媒体別最適化の対象（write ステップで生成する媒体） */
+  snsPlatforms: string[];
 };
 
 export const DEFAULT_POLICY: RouterPolicy = {
   fableComplexityThreshold: 4,
   fableDailyLimitUsd: 10,
   requireApprovalForPublish: true,
+  approvalCostThresholdUsd: 2,
+  pinnedNotes: [],
+  snsPlatforms: ["Instagram", "LINE", "X"],
 };
 
 const POLICY_KEY = "policy";

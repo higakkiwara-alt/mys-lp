@@ -7,12 +7,19 @@ n8n Cloud にインポートして使うワークフロー。セルフホスト�
 
 ```
 LINE(音声/テキスト受信 webhook)
-→ [音声のみ] コンテンツ取得 → Whisper 文字起こし
-→ POST {ROUTER_BASE_URL}/api/router/intake
-     headers: X-ROUTER-SECRET
-     body: { input, source: "voice"|"line", eventId: LINEメッセージID }
-→ 応答の resultSummary を LINE で返信
+→ [音声] コンテンツ取得 → Whisper 文字起こし → intake
+→ [テキストが承認コマンド] /api/router/runs/{id}/approve へ
+→ [通常テキスト] POST {ROUTER_BASE_URL}/api/router/intake
+→ 応答の output(即時ACK: 受付完了/想定処理/使用予定AI/概算コスト)を LINE で返信
 ```
+
+### 承認コマンド(LINEからそのまま返信)
+
+- `承認 <runId>` — 承認して続行(投稿等へ進む)
+- `却下 <runId> <修正指示>` — 修正指示を反映して作り直し(指示なしなら中止)
+- `再実行 <runId>` — エラー実行の再実行
+
+runId は承認待ち通知(WF-1 経由の LINE Push)に含まれる。
 
 ## wf-1-report.json — Router 完了報告 → LINE 通知
 

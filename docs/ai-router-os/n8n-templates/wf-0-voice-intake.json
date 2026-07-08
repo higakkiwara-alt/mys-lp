@@ -1,5 +1,5 @@
 {
-  "name": "WF-0: 音声/LINE → AI Router",
+  "name": "WF-0: 音声/LINE → AI Router（承認コマンド対応）",
   "nodes": [
     {
       "parameters": {
@@ -41,7 +41,7 @@
       "name": "音声コンテンツ取得",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [440, -100]
+      "position": [440, -160]
     },
     {
       "parameters": {
@@ -53,7 +53,46 @@
       "name": "Whisper 文字起こし",
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
-      "position": [660, -100]
+      "position": [660, -160]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ /^(承認|却下|再実行)\\s+\\S+/.test($json.body?.events?.[0]?.message?.text ?? '') }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-approval",
+      "name": "承認コマンド?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 120]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.ROUTER_BASE_URL }}/api/router/runs/{{ $json.body.events[0].message.text.split(/\\s+/)[1] }}/approve",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-ROUTER-SECRET", "value": "={{ $vars.ROUTER_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ action: {'承認':'approve','却下':'reject','再実行':'retry'}[$json.body.events[0].message.text.split(/\\s+/)[0]], note: $json.body.events[0].message.text.split(/\\s+/).slice(2).join(' '), by: 'line' }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "post-approve",
+      "name": "承認/却下/再実行 API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 120]
     },
     {
       "parameters": {
@@ -69,10 +108,10 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ input: $json.text ?? $('LINE Webhook').item.json.body.events[0].message.text, source: $('LINE Webhook').item.json.body.events[0].message.type === 'audio' ? 'voice' : 'line', eventId: $('LINE Webhook').item.json.body.events[0].message.id }) }}",
-        "options": { "timeout": 300000 }
+        "options": { "timeout": 60000 }
       },
       "id": "post-router",
-      "name": "AI Router intake",
+      "name": "AI Router intake（即時ACK）",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [880, 0]
@@ -89,7 +128,7 @@
         "options": {}
       },
       "id": "line-reply",
-      "name": "LINE 返信",
+      "name": "LINE 返信（ACK/承認結果）",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [1100, 0]
@@ -100,12 +139,19 @@
     "音声メッセージ?": {
       "main": [
         [{ "node": "音声コンテンツ取得", "type": "main", "index": 0 }],
-        [{ "node": "AI Router intake", "type": "main", "index": 0 }]
+        [{ "node": "承認コマンド?", "type": "main", "index": 0 }]
       ]
     },
     "音声コンテンツ取得": { "main": [[{ "node": "Whisper 文字起こし", "type": "main", "index": 0 }]] },
-    "Whisper 文字起こし": { "main": [[{ "node": "AI Router intake", "type": "main", "index": 0 }]] },
-    "AI Router intake": { "main": [[{ "node": "LINE 返信", "type": "main", "index": 0 }]] }
+    "Whisper 文字起こし": { "main": [[{ "node": "AI Router intake（即時ACK）", "type": "main", "index": 0 }]] },
+    "承認コマンド?": {
+      "main": [
+        [{ "node": "承認/却下/再実行 API", "type": "main", "index": 0 }],
+        [{ "node": "AI Router intake（即時ACK）", "type": "main", "index": 0 }]
+      ]
+    },
+    "承認/却下/再実行 API": { "main": [[{ "node": "LINE 返信（ACK/承認結果）", "type": "main", "index": 0 }]] },
+    "AI Router intake（即時ACK）": { "main": [[{ "node": "LINE 返信（ACK/承認結果）", "type": "main", "index": 0 }]] }
   },
   "settings": { "executionOrder": "v1" }
 }

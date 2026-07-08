@@ -311,7 +311,12 @@ model RouterRun {
   sourceEventId  String?      @unique // n8n等からの冪等性キー
   classification Json?        // Classifier出力
   plan           Json?        // 実行プラン
-  status         String       @default("queued") // queued | running | waiting_approval | done | error
+  status         String       @default("queued") // queued | running | waiting_approval | done | error | rejected
+  title          String?      // 分類器が付けた依頼タイトル
+  currentStep    Int          @default(0) // Orchestrator の再開位置
+  approvedAt     DateTime?    // 承認キュー: 承認日時
+  approvedBy     String?      // owner | line | web
+  feedback       String?      // 却下時のオーナー修正指示（再実行に使用）
   resultSummary  String?      // 依頼者向けの結果要約
   inputTokens    Int          @default(0)
   outputTokens   Int          @default(0)

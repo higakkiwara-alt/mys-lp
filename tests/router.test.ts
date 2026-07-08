@@ -101,13 +101,20 @@ describe("ルーティングテーブル", () => {
   });
 });
 
-describe("Obsidian 自動分類", () => {
+describe("Obsidian 自動分類（オーナー指定マッピング）", () => {
   it("経営判断は Company OS/経営判断 に保存される", () => {
     expect(vaultFolderFor("think", "経営")).toBe("Company OS/経営判断");
     expect(vaultFolderFor("think", "財務")).toBe("Company OS/経営判断");
   });
-  it("SNS は Projects/SNS、その他は受信箱", () => {
-    expect(vaultFolderFor("create_text", "SNS")).toBe("Projects/SNS");
-    expect(vaultFolderFor("create_text", "その他")).toBe("Knowledge/受信箱");
+  it("店舗・採用教育・AI自動化・SNS のマッピング", () => {
+    expect(vaultFolderFor("think", "美容室")).toBe("Company OS/店舗運営");
+    expect(vaultFolderFor("create_text", "採用")).toBe("Company OS/採用・教育");
+    expect(vaultFolderFor("automation", "技術")).toBe("Company OS/AI・自動化");
+    expect(vaultFolderFor("create_text", "SNS")).toBe("SNS");
+    expect(vaultFolderFor("create_text", "その他")).toBe("Knowledge");
+  });
+  it("売却タグ・会議タグは専用フォルダを優先", () => {
+    expect(vaultFolderFor("think", "経営", ["売却", "M&A"])).toBe("Company OS/売却・M&A");
+    expect(vaultFolderFor("knowledge", "美容室", ["会議"])).toBe("Meetings");
   });
 });
