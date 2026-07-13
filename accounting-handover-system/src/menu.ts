@@ -26,6 +26,7 @@ export function buildMenu(): void {
         .addItem('Gmail請求書を取り込む', 'menuImportGmail')
         .addItem('Square売上を取得(直近7日)', 'menuFetchSquare')
         .addItem('明細CSVを取り込む', 'menuImportStatements')
+        .addItem('明細の突合候補を検索', 'menuSuggestReconciliation')
         .addSeparator()
         .addItem('ファイル分類を提案', 'menuProposeClassify')
         .addItem('承認済みのファイル分類を実行', 'menuApplyClassify')

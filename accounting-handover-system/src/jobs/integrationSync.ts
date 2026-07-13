@@ -13,6 +13,7 @@ import { importInvoicesFromGmail } from '../services/gmailService';
 import { fetchSquareSales } from '../services/squareService';
 import { importStatementsFromDrive } from '../services/statementImportService';
 import { proposeFileClassifications } from '../services/driveClassifyService';
+import { suggestReconciliation } from '../services/reconcileService';
 
 export function runIntegrationSync(): void {
   const ic = getIntegrationConfig();
@@ -32,6 +33,7 @@ export function runIntegrationSync(): void {
   step('Gmail請求書取込', ic.gmailImportEnabled, () => importInvoicesFromGmail());
   step('Square売上取得', ic.squareAccessToken !== '', () => fetchSquareSales(7));
   step('明細CSV取込', true, () => importStatementsFromDrive());
+  step('明細突合候補', true, () => suggestReconciliation());
   step('ファイル分類提案', true, () => proposeFileClassifications());
   logger.info('runIntegrationSync', '外部連携の日次同期が完了しました');
 }

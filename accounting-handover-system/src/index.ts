@@ -34,6 +34,7 @@ import {
   proposeFileClassifications,
 } from './services/driveClassifyService';
 import { exportJournalCandidates } from './services/accountingExportService';
+import { suggestReconciliation } from './services/reconcileService';
 
 const g = globalThis as Record<string, unknown>;
 
@@ -251,6 +252,17 @@ g.menuImportStatements = (): void => {
       `明細CSV取込が完了しました(${rows} 行を 18_明細取込 へ追加)。`,
       '取込元: Drive「経理管理/04_銀行・カード明細/取込待ち」フォルダのCSVファイル。',
       '0件の場合: フォルダにCSVを置いたか、既に取込済みでないかを確認してください。',
+    ].join('\n');
+  });
+};
+
+g.menuSuggestReconciliation = (): void => {
+  withErrorAlert('menuSuggestReconciliation', () => {
+    const matched = suggestReconciliation();
+    return [
+      `明細の突合候補検索が完了しました(${matched} 行に候補を書き込み)。`,
+      '18_明細取込で「候補あり」の行を確認し、正しければ突合状況を「突合済み」にしてください。',
+      '候補は 金額の完全一致+日付差7日以内 で検索しています(確定は必ず人間が行います)。',
     ].join('\n');
   });
 };
