@@ -1,0 +1,33 @@
+{
+  "name": "otk-accounting-handover-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OTK COMPANY 経理引き継ぎシステム (Google Apps Script + スプレッドシート)",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "node scripts/build.mjs",
+    "verify": "node scripts/verify.mjs",
+    "clasp:login": "clasp login",
+    "clasp:create": "clasp create --type sheets --title \"OTK経理引き継ぎシステム\" --rootDir dist",
+    "clasp:push": "npm run build && clasp push",
+    "clasp:pull": "clasp pull",
+    "clasp:open": "clasp open",
+    "deploy": "node scripts/deploy.mjs"
+  },
+  "devDependencies": {
+    "@google/clasp": "^2.4.2",
+    "@types/google-apps-script": "^1.0.83",
+    "@types/node": "^20.11.0",
+    "esbuild": "^0.21.5",
+    "eslint": "^9.5.0",
+    "prettier": "^3.3.2",
+    "typescript": "^5.5.2",
+    "typescript-eslint": "^8.34.0",
+    "vitest": "^1.6.0"
+  }
+}
