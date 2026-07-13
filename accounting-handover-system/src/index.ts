@@ -21,9 +21,19 @@ import { updateDashboard } from './services/dashboardService';
 import { createDriveFolderStructure, logFolderStructure } from './services/driveService';
 import { createIntakeForm } from './services/formService';
 import { sendTestNotification } from './services/notificationService';
-import { parseYearMonth } from './utils/helpers';
+import { parseYearMonth, toYearMonthHyphen } from './utils/helpers';
 import { errorMessage } from './utils/errors';
 import { logger } from './utils/logger';
+import { runIntegrationSync } from './jobs/integrationSync';
+import { generateMonthlyReport, runMonthlyReportJob } from './jobs/monthlyReport';
+import { importInvoicesFromGmail } from './services/gmailService';
+import { fetchSquareSales } from './services/squareService';
+import { importStatementsFromDrive } from './services/statementImportService';
+import {
+  applyApprovedClassifications,
+  proposeFileClassifications,
+} from './services/driveClassifyService';
+import { exportJournalCandidates } from './services/accountingExportService';
 
 const g = globalThis as Record<string, unknown>;
 
@@ -71,6 +81,12 @@ g.jobDataIntegrityCheck = (): void => {
 };
 g.jobMonthlyChecklist = (): void => {
   runMonthlyChecklistGeneration();
+};
+g.jobIntegrationSync = (): void => {
+  runIntegrationSync();
+};
+g.jobMonthlyReport = (): void => {
+  runMonthlyReportJob();
 };
 
 // ===== メニュー =====
@@ -202,4 +218,112 @@ g.menuDeleteSampleData = (): void => {
 
 g.menuShowConfig = (): void => {
   withErrorAlert('menuShowConfig', () => describeConfig());
+};
+
+// ===== Phase 2: 外部連携メニュー =====
+g.menuImportGmail = (): void => {
+  withErrorAlert('menuImportGmail', () => {
+    const count = importInvoicesFromGmail();
+    return [
+      `Gmail取込が完了しました(添付 ${count} 件)。`,
+      '結果は 21_Gmail取込 と 02_書類受付台帳 を確認してください。',
+      count === 0
+        ? '0件の場合: GMAIL_IMPORT_ENABLED=true の設定と、検索条件(GMAIL_SEARCH_QUERY)を確認してください。'
+        : '取り込んだ書類の金額・支払期限・店舗を入力してください。',
+    ].join('\n');
+  });
+};
+
+g.menuFetchSquare = (): void => {
+  withErrorAlert('menuFetchSquare', () => {
+    const rows = fetchSquareSales(7);
+    return [
+      `Square売上を取得しました(日次 ${rows} 行を 17_売上データ取込 へ反映)。`,
+      '売上の会計上の計上方法(総額/手数料控除後)は税理士に確認してください。',
+    ].join('\n');
+  });
+};
+
+g.menuImportStatements = (): void => {
+  withErrorAlert('menuImportStatements', () => {
+    const rows = importStatementsFromDrive();
+    return [
+      `明細CSV取込が完了しました(${rows} 行を 18_明細取込 へ追加)。`,
+      '取込元: Drive「経理管理/04_銀行・カード明細/取込待ち」フォルダのCSVファイル。',
+      '0件の場合: フォルダにCSVを置いたか、既に取込済みでないかを確認してください。',
+    ].join('\n');
+  });
+};
+
+g.menuProposeClassify = (): void => {
+  withErrorAlert('menuProposeClassify', () => {
+    const count = proposeFileClassifications();
+    return [
+      `ファイル分類の提案を ${count} 件作成しました(20_ファイル分類提案)。`,
+      'この時点ではファイルは移動していません。',
+      '内容を確認し、問題なければステータスを「承認」にして「承認済みのファイル分類を実行」を実行してください。',
+    ].join('\n');
+  });
+};
+
+g.menuApplyClassify = (): void => {
+  withErrorAlert('menuApplyClassify', () => {
+    const ui = SpreadsheetApp.getUi();
+    const res = ui.alert(
+      'ファイル分類の実行',
+      '20_ファイル分類提案でステータスが「承認」の行について、ファイルの移動と改名を実行します。よろしいですか?',
+      ui.ButtonSet.YES_NO,
+    );
+    if (res !== ui.Button.YES) return;
+    const count = applyApprovedClassifications();
+    return `承認済みの分類を ${count} 件実行しました。エラーがある場合は「エラー」列を確認してください。`;
+  });
+};
+
+g.menuExportJournal = (): void => {
+  withErrorAlert('menuExportJournal', () => {
+    const ui = SpreadsheetApp.getUi();
+    const res = ui.prompt(
+      '仕訳候補CSVを出力',
+      '対象年月を入力してください(例: 2026-07)。空欄の場合は当月分を出力します。',
+      ui.ButtonSet.OK_CANCEL,
+    );
+    if (res.getSelectedButton() !== ui.Button.OK) return;
+    const text = res.getResponseText().trim();
+    const ym = text ? text : toYearMonthHyphen(new Date());
+    if (!parseYearMonth(ym)) return '対象年月の形式が正しくありません(例: 2026-07)。';
+    const result = exportJournalCandidates(ym);
+    return result.count > 0
+      ? [
+          `${ym} の仕訳候補CSVを出力しました(${result.count}行)。`,
+          `保存先: ${result.url}`,
+          '勘定科目・税区分は候補です。会計ソフトのインポート画面で確認のうえ取り込んでください。',
+        ].join('\n')
+      : `${ym} の仕訳候補は0件でした(レシート・請求書の日付と金額を確認してください)。`;
+  });
+};
+
+g.menuMonthlyReport = (): void => {
+  withErrorAlert('menuMonthlyReport', () => {
+    const ui = SpreadsheetApp.getUi();
+    const res = ui.prompt(
+      '月次経営レポートを作成',
+      '対象年月を入力してください(例: 2026-06)。空欄の場合は前月分を作成します。',
+      ui.ButtonSet.OK_CANCEL,
+    );
+    if (res.getSelectedButton() !== ui.Button.OK) return;
+    const text = res.getResponseText().trim();
+    let ym: string;
+    if (text) {
+      if (!parseYearMonth(text)) return '対象年月の形式が正しくありません(例: 2026-06)。';
+      ym = text;
+    } else {
+      const now = new Date();
+      ym = toYearMonthHyphen(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+    }
+    const stores = generateMonthlyReport(ym);
+    return stores > 0
+      ? `${ym} の店舗別月次集計を作成しました(${stores}店舗)。19_店舗別月次集計 を確認してください。`
+      : `${ym} の集計対象データがありませんでした(売上取込・レシート・請求書を確認してください)。`;
+  });
 };

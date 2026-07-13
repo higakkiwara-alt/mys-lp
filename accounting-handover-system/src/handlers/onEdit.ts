@@ -27,6 +27,12 @@ const IGNORED_KEYS: SheetKey[] = [
   'ERROR_LIST',
   'DASHBOARD',
   'FORM_INBOX',
+  // Phase 2 のシステム管理シート(スクリプトが書き込む。ユーザー編集への自動処理は不要)
+  'SQUARE_SALES',
+  'STATEMENT',
+  'STORE_PL',
+  'FILE_CLASSIFY',
+  'GMAIL_LOG',
 ];
 
 export function handleEdit(e: GoogleAppsScript.Events.SheetsOnEdit): void {

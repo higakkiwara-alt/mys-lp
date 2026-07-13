@@ -23,7 +23,40 @@ export const CONFIG_KEYS = {
   TIMEZONE: 'TIMEZONE',
   MODE: 'MODE',
   FORM_ID: 'FORM_ID',
+  // ===== Phase 2: 外部連携(未設定の機能は自動的にスキップされる) =====
+  GMAIL_IMPORT_ENABLED: 'GMAIL_IMPORT_ENABLED',
+  GMAIL_SEARCH_QUERY: 'GMAIL_SEARCH_QUERY',
+  SQUARE_ACCESS_TOKEN: 'SQUARE_ACCESS_TOKEN',
+  SQUARE_ENVIRONMENT: 'SQUARE_ENVIRONMENT',
+  VISION_API_KEY: 'VISION_API_KEY',
+  N8N_WEBHOOK_URL: 'N8N_WEBHOOK_URL',
 } as const;
+
+/** Phase 2 外部連携の設定 */
+export interface IntegrationConfig {
+  gmailImportEnabled: boolean;
+  gmailSearchQuery: string;
+  squareAccessToken: string;
+  squareEnvironment: 'production' | 'sandbox';
+  visionApiKey: string;
+  n8nWebhookUrl: string;
+}
+
+/** 外部連携設定を読み込む */
+export function getIntegrationConfig(): IntegrationConfig {
+  const p = PropertiesService.getScriptProperties().getProperties();
+  return {
+    gmailImportEnabled: (p[CONFIG_KEYS.GMAIL_IMPORT_ENABLED] ?? '').toLowerCase() === 'true',
+    gmailSearchQuery:
+      p[CONFIG_KEYS.GMAIL_SEARCH_QUERY]?.trim() ||
+      'has:attachment (請求書 OR 請求 OR invoice OR 御請求) newer_than:30d',
+    squareAccessToken: p[CONFIG_KEYS.SQUARE_ACCESS_TOKEN]?.trim() || '',
+    squareEnvironment:
+      p[CONFIG_KEYS.SQUARE_ENVIRONMENT]?.trim() === 'sandbox' ? 'sandbox' : 'production',
+    visionApiKey: p[CONFIG_KEYS.VISION_API_KEY]?.trim() || '',
+    n8nWebhookUrl: p[CONFIG_KEYS.N8N_WEBHOOK_URL]?.trim() || '',
+  };
+}
 
 const DEFAULTS: AppConfig = {
   companyName: 'OTK COMPANY',
@@ -95,6 +128,7 @@ export function assertNotificationConfig(cfg: AppConfig): void {
 /** 現在の設定を人間向けの文字列にする(メニュー「システム設定を確認」用) */
 export function describeConfig(): string {
   const cfg = getConfig();
+  const ic = getIntegrationConfig();
   const mask = (s: string): string => (s ? s.replace(/^(.{2}).*(@.*)$/, '$1***$2') : '(未設定)');
   return [
     `会社名: ${cfg.companyName}`,
@@ -109,6 +143,12 @@ export function describeConfig(): string {
     `DriveルートフォルダID: ${cfg.driveRootFolderId || '(未作成。メニューから作成できます)'}`,
     `Driveルートフォルダ名: ${cfg.driveRootFolderName}`,
     `タイムゾーン: ${cfg.timezone}`,
+    '',
+    '--- 外部連携(Phase 2) ---',
+    `Gmail取込: ${ic.gmailImportEnabled ? '有効' : '無効(GMAIL_IMPORT_ENABLED=true で有効化)'}`,
+    `Square連携: ${ic.squareAccessToken ? `設定済み(${ic.squareEnvironment})` : '未設定(SQUARE_ACCESS_TOKEN)'}`,
+    `レシートOCR: ${ic.visionApiKey ? '設定済み' : '未設定(VISION_API_KEY)'}`,
+    `n8n Webhook: ${ic.n8nWebhookUrl ? '設定済み' : '未設定(N8N_WEBHOOK_URL)'}`,
     '',
     '設定変更: 拡張機能 → Apps Script → プロジェクトの設定 → スクリプト プロパティ',
   ].join('\n');

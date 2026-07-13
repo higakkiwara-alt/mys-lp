@@ -20,7 +20,12 @@ export type SheetKey =
   | 'CHANGE_LOG'
   | 'SYSTEM_LOG'
   | 'ERROR_LIST'
-  | 'FORM_INBOX';
+  | 'FORM_INBOX'
+  | 'SQUARE_SALES'
+  | 'STATEMENT'
+  | 'STORE_PL'
+  | 'FILE_CLASSIFY'
+  | 'GMAIL_LOG';
 
 /** 入力規則の定義 */
 export interface ValidationDef {

@@ -20,6 +20,19 @@ export function buildMenu(): void {
     .addSeparator()
     .addItem('Driveフォルダを作成', 'menuCreateDriveFolders')
     .addItem('受付フォームを作成', 'menuCreateForm')
+    .addSubMenu(
+      ui
+        .createMenu('外部連携(Phase 2)')
+        .addItem('Gmail請求書を取り込む', 'menuImportGmail')
+        .addItem('Square売上を取得(直近7日)', 'menuFetchSquare')
+        .addItem('明細CSVを取り込む', 'menuImportStatements')
+        .addSeparator()
+        .addItem('ファイル分類を提案', 'menuProposeClassify')
+        .addItem('承認済みのファイル分類を実行', 'menuApplyClassify')
+        .addSeparator()
+        .addItem('仕訳候補CSVを出力', 'menuExportJournal')
+        .addItem('月次経営レポートを作成', 'menuMonthlyReport'),
+    )
     .addSeparator()
     .addItem('通知テスト', 'menuTestNotification')
     .addItem('サンプルデータを削除', 'menuDeleteSampleData')

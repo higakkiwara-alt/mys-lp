@@ -11,6 +11,7 @@ import { unique } from '../utils/helpers';
 import { logger } from '../utils/logger';
 import { getNotificationTargetEmails } from './masterDataService';
 import { getSs } from './sheetService';
+import { notifyWebhook } from './webhookService';
 
 const DEDUP_PREFIX = 'NOTIFY_SENT_';
 const DEDUP_HOURS = 20; // 同じ内容は約1日1回まで
@@ -100,6 +101,7 @@ export function sendNotification(
   const body = buildNotificationBody(title, items, getSs().getUrl());
   try {
     MailApp.sendEmail(recipients.join(','), subject, body);
+    notifyWebhook(title, items); // n8n Webhook(未設定なら何もしない)
     markSent(key);
     logger.info(
       'sendNotification',

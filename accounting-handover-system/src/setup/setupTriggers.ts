@@ -54,6 +54,20 @@ export function setupTriggers(): void {
       create: () =>
         ScriptApp.newTrigger('jobMonthlyChecklist').timeBased().onMonthDay(1).atHour(6).create(),
     },
+    {
+      handler: 'jobIntegrationSync',
+      create: () =>
+        ScriptApp.newTrigger('jobIntegrationSync')
+          .timeBased()
+          .everyDays(1)
+          .atHour(Math.min(cfg.notificationHour + 2, 23))
+          .create(),
+    },
+    {
+      handler: 'jobMonthlyReport',
+      create: () =>
+        ScriptApp.newTrigger('jobMonthlyReport').timeBased().onMonthDay(2).atHour(7).create(),
+    },
   ];
 
   let created = 0;

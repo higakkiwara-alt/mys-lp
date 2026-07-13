@@ -245,6 +245,23 @@ npm run clasp:push
 - 原本(紙・PDF)は勝手に捨てない。システムもファイルの削除・移動は行いません
 - 税務判断・支払実行は必ず人間(代表・税理士)が行います
 
+## 28.5 外部連携(Phase 2)
+
+以下の自動化が追加されています。**すべて任意機能**で、設定しない連携は自動的にスキップされます。設定方法は `docs/integration-guide.md` 参照。
+
+| 機能             | 設定キー                     | 内容                                                                    |
+| ---------------- | ---------------------------- | ----------------------------------------------------------------------- |
+| Gmail請求書取込  | `GMAIL_IMPORT_ENABLED=true`  | 添付付き請求書メールをDrive保存+台帳へ自動登録(毎日)                    |
+| Square売上取得   | `SQUARE_ACCESS_TOKEN`        | 日次売上を店舗別に `17_売上データ取込` へ(毎日)                         |
+| 明細CSV取込      | 不要                         | `04_銀行・カード明細/取込待ち` のCSVを `18_明細取込` へ                 |
+| ファイル分類提案 | 任意で `VISION_API_KEY`(OCR) | 未分類ファイルの分類・命名を「提案」。**移動は承認後のみ**              |
+| 仕訳候補CSV出力  | 不要                         | 月次の仕訳候補CSVを生成(freee/MFのインポート用)                         |
+| 月次経営レポート | 不要                         | 店舗別の売上・経費・粗利を `19_店舗別月次集計` へ+代表へメール(毎月2日) |
+| n8n Webhook      | `N8N_WEBHOOK_URL`            | 通知をJSONでn8nへ送信(LINE/Slack中継用)                                 |
+
+メニュー「OTK経理管理」→「外部連携(Phase 2)」から手動実行もできます。
+Phase 2 では OAuth スコープに Gmail読み取り・外部リクエストが追加されているため、`clasp push` 後の初回実行時に**再承認**が必要です。
+
 ## 29. n8n連携の将来構想
 
 各シートは「1行=1レコード+一意の管理ID」で設計されており、n8n の Google Sheets ノードでそのまま読み書きできます。想定シナリオ: Gmail添付請求書の自動受付 → 台帳へ追記 → Slack/LINE通知 → 会計ソフトAPIへ連携。詳細は `docs/accounting-handover-design.md` の「将来連携」参照。
@@ -278,3 +295,4 @@ npm run deploy        # verify成功後にclasp push
 | `docs/tax-accountant-confirmation-list.md` | 税理士確認事項リスト       |
 | `docs/test-plan.md`                        | テスト計画・手動テスト手順 |
 | `docs/troubleshooting.md`                  | トラブルシューティング     |
+| `docs/integration-guide.md`                | 外部連携ガイド(Phase 2)    |
