@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "codex": {
+    "command": "codex",
+    "subcommand": "exec",
+    "model": null,
+    "sandbox": "read-only",
+    "timeout_seconds": 300,
+    "max_retries": 1,
+    "retry_wait_seconds": 5,
+    "extra_args": ["--skip-git-repo-check", "--ephemeral", "--color", "never"]
+  },
+  "paths": {
+    "inbox": "inbox",
+    "tasks": "tasks",
+    "outputs": "outputs",
+    "logs": "logs",
+    "waiting_approval": "waiting_approval"
+  },
+  "obsidian": {
+    "vault_root": null,
+    "waiting_approval_dir": null,
+    "_comment": "ローカルPCで使う場合、vault_rootにObsidian Vaultの絶対パス、waiting_approval_dirに '99_waiting_approval/AI_BRIDGE' のようなVault内相対パスを設定すると、成果物がそちらへコピー保存されます。nullの場合はAI_BRIDGE/waiting_approval のみ使用します。"
+  },
+  "safety": {
+    "redact_secrets_in_logs": true,
+    "allow_external_send": false,
+    "auto_approve": false
+  }
+}

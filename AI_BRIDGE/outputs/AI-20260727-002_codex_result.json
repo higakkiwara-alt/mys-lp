@@ -1,0 +1,33 @@
+{
+  "run_id": "AI-20260727-002",
+  "command": [
+    "/tmp/claude-0/-home-user-mys-lp/79307513-cffa-5b65-83ce-17accb049ba3/scratchpad/fake_codex.sh",
+    "exec",
+    "--skip-git-repo-check",
+    "--ephemeral",
+    "--color",
+    "never",
+    "-s",
+    "read-only",
+    "-o",
+    "/home/user/mys-lp/AI_BRIDGE/outputs/AI-20260727-002_codex_answer.md",
+    "-"
+  ],
+  "started_at": "2026-07-27T04:00:38+0900",
+  "timeout_seconds": 300,
+  "attempts": [
+    {
+      "n": 1,
+      "started_at": "2026-07-27T04:00:38+0900",
+      "exit_code": 0,
+      "duration_sec": 0.0,
+      "stdout_log": "logs/AI-20260727-002_attempt1_stdout.log",
+      "stderr_log": "logs/AI-20260727-002_attempt1_stderr.log"
+    }
+  ],
+  "success": true,
+  "answer_file": "/home/user/mys-lp/AI_BRIDGE/outputs/AI-20260727-002_codex_answer.md",
+  "error": null,
+  "finished_at": "2026-07-27T04:00:38+0900",
+  "prompt_head": "あなたはセキュリティと保守性に詳しいシニアエンジニアです。\n以下のAI Bridge構成(Claude Code⇔Codex CLI連携の最小構成)を、\nセキュリティ・保守性・使いやすさの3観点でレビューし、改善点を箇条書きで指摘してください。\n\n構成:\n- AI_BRIDGE/config/bridge_config.json: タイムアウト・再試行・パス設定\n- scripts/send_to_codex.py: codex execを非対話呼び出し、stdout/stderr分離ログ、秘密情報マスク\n- scripts/run_ai_bridge.py: Task ID採番、状態管理、waiting_approvalへの保存\n- scripts/check_bridge.py: 健全性チェック\n- 成果物は必ずwaiting_approvalに置き、人間が承認・移動する\n"
+}
